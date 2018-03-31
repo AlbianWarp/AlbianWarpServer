@@ -28,6 +28,10 @@ def register_form():
         return '<h1>USER CREATED!</h1>'
     return '<form name="register_form"  method="POST">email:<br><input type="text" name="email"><br>username:<br><input type="text" name="username"><br>password :<br><input type="password" name="password"><br><input type="submit" value="Submit"></form>'
 
+@app.route("/version")
+def get_version():
+    return config.AW_SERVER_VERSION,200
+
 class Messages(Resource):
 
     @auth.login_required
