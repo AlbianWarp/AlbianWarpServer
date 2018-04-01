@@ -7,7 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 Base = declarative_base()
 
-
 class User(Base):
     """Docsting"""
 
@@ -43,7 +42,6 @@ class Message(Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     created = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.utcnow)
     data = sqlalchemy.Column(sqlalchemy.String())
-
     sender_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
     recipient_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
     sender = sqlalchemy.orm.relationship('User', foreign_keys='Message.sender_user_id', lazy='subquery')

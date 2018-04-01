@@ -16,21 +16,25 @@ api = Api(app)
 db = SQLAlchemy(app)
 auth = HTTPBasicAuth()
 
-@app.route('/register',methods=['GET','POST'])
+
+@app.route('/register', methods=['GET', 'POST'])
 def register_form():
     if request.method == 'POST':
         user = db.session.query(models.User).filter(models.User.username == request.form['username']).first()
         if user:
             return '<h1>THAT USER ALREADY EXISTS!!!!</h1>', 409
-        new_user = models.User(username=request.form['username'],password=request.form['password'], email=request.form['email'])
+        new_user = models.User(username=request.form['username'], password=request.form['password'],
+                               email=request.form['email'])
         db.session.add(new_user)
         db.session.commit()
         return '<h1>USER CREATED!</h1>'
     return '<form name="register_form"  method="POST">email:<br><input type="text" name="email"><br>username:<br><input type="text" name="username"><br>password :<br><input type="password" name="password"><br><input type="submit" value="Submit"></form>'
 
+
 @app.route("/version")
 def get_version():
-    return config.AW_SERVER_VERSION,200
+    return config.AW_SERVER_VERSION, 200
+
 
 class Messages(Resource):
 
@@ -50,28 +54,30 @@ class Messages(Resource):
         if recipient_user == None:
             abort(404)
         sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-        message = models.Message(recipient=recipient_user, sender=sender_user, data= json.dumps(data))
+        message = models.Message(recipient=recipient_user, sender=sender_user, data=json.dumps(data))
         db.session.add(message)
         db.session.commit()
         return {"message": "direct message successfully added"}, 200
+
 
 class Message(Resource):
     @auth.login_required
     def get(self, message_id):
         auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id).first()
+        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         data = json.loads(message.data)
         data['aw_sender'] = message.sender.username
         data['aw_date'] = message.sender.created.strftime('%Y%m%d%H%M%S')
         del data['aw_recipient']
         return data
 
-    def delete(self,message_id):
+    def delete(self, message_id):
         auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id).first()
+        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         db.session.delete(message)
         db.session.commit()
         return {"message": "successfully deleted message %s" % message.id}
+
 
 @auth.error_handler
 def auth_error():
