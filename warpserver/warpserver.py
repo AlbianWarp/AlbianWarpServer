@@ -3,6 +3,7 @@ from flask import Flask, request
 from flask_httpauth import HTTPBasicAuth
 from flask_restful import Resource, Api, abort
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 import json
 
 from . import models
@@ -28,7 +29,42 @@ def register_form():
         db.session.add(new_user)
         db.session.commit()
         return '<h1>USER CREATED!</h1>'
-    return '<form name="register_form"  method="POST">email:<br><input type="text" name="email"><br>username:<br><input type="text" name="username"><br>password :<br><input type="password" name="password"><br><input type="submit" value="Submit"></form>'
+    return """
+<form name="register_form"  method="POST">
+email: <input type="text" name="email">
+<br /> username: <input type="text" name="username">
+<br /> password: <input type="password" name="password">
+<br /> <input type="submit" value="Submit">
+</form>'
+"""
+
+
+@auth.login_required
+@app.route('/creature_upload', methods=['GET', 'POST'])
+def upload_creature_form():
+    if request.method == 'POST':
+        f = request.files['file']
+        f.save(os.path.join(config.UPLOAD_FOLDER, "creatures", secure_filename(f.filename)))
+        recipient = request.form['recipient']
+        creature_name = request.form['creature_name']
+        print('got creature "%s" for user "%s"' % (creature_name, recipient))
+        sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        print(sender_user.username)
+        recipient_user = db.session.query(models.User).filter(models.User.username == recipient).first()
+        creature = models.Creature(creature_name, secure_filename(f.filename), sender_user, recipient_user)
+        db.session.add(creature)
+        db.session.commit()
+
+        return 'file uploaded successfully'
+    elif request.method == 'GET':
+        return """
+<form action = "/creature_upload" method = "POST" enctype = "multipart/form-data">
+recipient: <input type="text" name="recipient">
+<br />creature name: <input type="text" name="creature_name">
+<br />creature file: <input type = "file" name = "file" />
+<br /><input type = "submit" />
+</form>
+"""
 
 
 @app.route("/version")
@@ -50,10 +86,10 @@ class Messages(Resource):
     @auth.login_required
     def post(self):
         data = request.json
+        sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
         recipient_user = db.session.query(models.User).filter(models.User.username == data['aw_recipient']).first()
         if recipient_user == None:
             abort(404)
-        sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
         message = models.Message(recipient=recipient_user, sender=sender_user, data=json.dumps(data))
         db.session.add(message)
         db.session.commit()
@@ -64,16 +100,19 @@ class Message(Resource):
     @auth.login_required
     def get(self, message_id):
         auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
+        message = db.session.query(models.Message).filter(
+            models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         data = json.loads(message.data)
         data['aw_sender'] = message.sender.username
         data['aw_date'] = message.sender.created.strftime('%Y%m%d%H%M%S')
         del data['aw_recipient']
         return data
 
+    @auth.login_required
     def delete(self, message_id):
         auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-        message = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
+        message = db.session.query(models.Message).filter(
+            models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         db.session.delete(message)
         db.session.commit()
         return {"message": "successfully deleted message %s" % message.id}

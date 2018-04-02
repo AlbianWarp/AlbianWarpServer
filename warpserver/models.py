@@ -69,16 +69,19 @@ class Creature(Base):
     __tablename__ = 'creatures'
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     uploaded = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.utcnow)
-    name = sqlalchemy.Column(sqlalchemy.String(30), unique=True)
-    species = sqlalchemy.Column(sqlalchemy.String())
+    name = sqlalchemy.Column(sqlalchemy.String(30))
+    filename = sqlalchemy.Column(sqlalchemy.String(256))
     sender_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
     recipient_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
     sender = sqlalchemy.orm.relationship('User', foreign_keys='Creature.sender_user_id', lazy='subquery')
     recipient = sqlalchemy.orm.relationship('User', foreign_keys='Creature.recipient_user_id', lazy='subquery')
 
-    def __init__(self, name, species):
+    def __init__(self, name, filename, sender_user, recipient_user):
         self.name = name
-        self.species = species
+        self.recipient_user_id = recipient_user.id
+        self.sender_user_id = sender_user.id
+        self.filename  = filename
+
 
     def to_dict(self):
         return {'creaturename': self.name,
