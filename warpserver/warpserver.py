@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request
+from uuid import uuid4
+from flask import Flask, request, send_file
 from flask_httpauth import HTTPBasicAuth
 from flask_restful import Resource, Api, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -39,12 +40,14 @@ email: <input type="text" name="email">
 """
 
 
-@auth.login_required
+
 @app.route('/creature_upload', methods=['GET', 'POST'])
+@auth.login_required
 def upload_creature_form():
     if request.method == 'POST':
         f = request.files['file']
-        f.save(os.path.join(config.UPLOAD_FOLDER, "creatures", secure_filename(f.filename)))
+        uuid = str(uuid4())
+        f.save(os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (uuid, secure_filename(f.filename))))
         recipient = request.form['recipient']
         creature_name = request.form['creature_name']
         print('got creature "%s" for user "%s"' % (creature_name, recipient))
@@ -54,7 +57,6 @@ def upload_creature_form():
         creature = models.Creature(creature_name, secure_filename(f.filename), sender_user, recipient_user)
         db.session.add(creature)
         db.session.commit()
-
         return 'file uploaded successfully'
     elif request.method == 'GET':
         return """
@@ -65,6 +67,20 @@ recipient: <input type="text" name="recipient">
 <br /><input type = "submit" />
 </form>
 """
+
+
+@app.route('/creature/<int:creature_id>', methods=['GET','DELETE'])
+@auth.login_required
+def creature(creature_id):
+    auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+    creature = db.session.query(models.Creature).filter(models.Creature.id == creature_id and models.Creature.recipient_user_id == auth_user.id)
+    if request.method == 'GET':
+        filename = os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (creature.uuid, creature.filename))
+        return send_file(filename,attachment_filename="%s_%s" % (creature.uuid, creature.filename))
+    elif request.method == 'DELETE':
+        db.session.delete(creature)
+        db.session.commit()
+        return "creature deleted", 200
 
 
 @app.route("/version")
@@ -94,6 +110,19 @@ class Messages(Resource):
         db.session.add(message)
         db.session.commit()
         return {"message": "direct message successfully added"}, 200
+
+
+class Creatures(Resource):
+
+    @auth.login_required
+    def get(self):
+        auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        creatures = db.session.query(models.Creature).filter(models.Creature.recipient_user_id == auth_user.id)
+        creature_ids = []
+        for creature in creatures:
+            creature_ids.append({ "id": creature.id,
+                                "filename": "%s_%s" % (creature.uuid, creature.filename)})
+        return {"creatures": creature_ids}
 
 
 class Message(Resource):
@@ -140,3 +169,4 @@ def init_db():
 
 api.add_resource(Messages, '/messages')
 api.add_resource(Message, '/message', '/message/<int:message_id>')
+api.add_resource(Creatures, '/creatures')

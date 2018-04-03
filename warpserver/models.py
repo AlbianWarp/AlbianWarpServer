@@ -70,6 +70,7 @@ class Creature(Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     uploaded = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.utcnow)
     name = sqlalchemy.Column(sqlalchemy.String(30))
+    uuid = sqlalchemy.Column(sqlalchemy.String(36))
     filename = sqlalchemy.Column(sqlalchemy.String(256))
     sender_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
     recipient_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey(User.id))
@@ -80,7 +81,7 @@ class Creature(Base):
         self.name = name
         self.recipient_user_id = recipient_user.id
         self.sender_user_id = sender_user.id
-        self.filename  = filename
+        self.filename = filename
 
 
     def to_dict(self):
