@@ -39,6 +39,12 @@ email: <input type="text" name="email">
 </form>'
 """
 
+@app.route('/users')
+def users():
+    tmp = []
+    for user in db.session.query(models.User):
+        tmp.append(user.username)
+    return json.dumps(tmp)
 
 
 @app.route('/creature_upload', methods=['GET', 'POST'])
@@ -46,15 +52,15 @@ email: <input type="text" name="email">
 def upload_creature_form():
     if request.method == 'POST':
         f = request.files['file']
-        uuid = str(uuid4())
-        f.save(os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (uuid, secure_filename(f.filename))))
+        uid = str(uuid4())
+        f.save(os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (uid, secure_filename(f.filename))))
         recipient = request.form['recipient']
         creature_name = request.form['creature_name']
         print('got creature "%s" for user "%s"' % (creature_name, recipient))
         sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
         print(sender_user.username)
         recipient_user = db.session.query(models.User).filter(models.User.username == recipient).first()
-        creature = models.Creature(creature_name, secure_filename(f.filename), sender_user, recipient_user)
+        creature = models.Creature(creature_name, secure_filename(f.filename), sender_user, recipient_user, uid)
         db.session.add(creature)
         db.session.commit()
         return 'file uploaded successfully'
@@ -73,12 +79,12 @@ recipient: <input type="text" name="recipient">
 @auth.login_required
 def creature(creature_id):
     auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-    creature = db.session.query(models.Creature).filter(models.Creature.id == creature_id and models.Creature.recipient_user_id == auth_user.id)
+    crea = db.session.query(models.Creature).filter(models.Creature.id == creature_id and models.Creature.recipient_user_id == auth_user.id).first()
     if request.method == 'GET':
-        filename = os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (creature.uuid, creature.filename))
-        return send_file(filename,attachment_filename="%s_%s" % (creature.uuid, creature.filename))
+        filename = os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (crea.uid, crea.filename))
+        return send_file(filename,attachment_filename="%s_%s" % (crea.uid, crea.filename))
     elif request.method == 'DELETE':
-        db.session.delete(creature)
+        db.session.delete(crea)
         db.session.commit()
         return "creature deleted", 200
 
@@ -121,7 +127,7 @@ class Creatures(Resource):
         creature_ids = []
         for creature in creatures:
             creature_ids.append({ "id": creature.id,
-                                "filename": "%s_%s" % (creature.uuid, creature.filename)})
+                                "filename": "%s_%s" % (creature.uid, creature.filename)})
         return {"creatures": creature_ids}
 
 
