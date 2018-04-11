@@ -1,7 +1,9 @@
 import os
+import jwt
+import datetime
+from functools import wraps
 from uuid import uuid4
-from flask import Flask, request, send_file
-from flask_httpauth import HTTPBasicAuth
+from flask import Flask, request, send_file, jsonify, make_response, session
 from flask_restful import Resource, Api, abort
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
@@ -16,7 +18,22 @@ app.config.from_pyfile(os.path.join(config_path, "config.py"))
 api = Api(app)
 
 db = SQLAlchemy(app)
-auth = HTTPBasicAuth()
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('token')
+        if not token:
+            return jsonify({'message': 'token not found'}), 403
+        try:
+            session['user'] = jwt.decode(token, app.config['SECRET_KEY'])
+        except Exception as e:
+            print(e)
+            return jsonify({'message': 'token is broken'}), 403
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -39,7 +56,9 @@ email: <input type="text" name="email">
 </form>'
 """
 
+
 @app.route('/users')
+@token_required
 def users():
     tmp = []
     for user in db.session.query(models.User):
@@ -48,7 +67,7 @@ def users():
 
 
 @app.route('/creature_upload', methods=['GET', 'POST'])
-@auth.login_required
+@token_required
 def upload_creature_form():
     if request.method == 'POST':
         f = request.files['file']
@@ -57,7 +76,7 @@ def upload_creature_form():
         recipient = request.form['recipient']
         creature_name = request.form['creature_name']
         print('got creature "%s" for user "%s"' % (creature_name, recipient))
-        sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        sender_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         print(sender_user.username)
         recipient_user = db.session.query(models.User).filter(models.User.username == recipient).first()
         creature = models.Creature(creature_name, secure_filename(f.filename), sender_user, recipient_user, uid)
@@ -75,14 +94,15 @@ recipient: <input type="text" name="recipient">
 """
 
 
-@app.route('/creature/<int:creature_id>', methods=['GET','DELETE'])
-@auth.login_required
+@app.route('/creature/<int:creature_id>', methods=['GET', 'DELETE'])
+@token_required
 def creature(creature_id):
-    auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
-    crea = db.session.query(models.Creature).filter(models.Creature.id == creature_id and models.Creature.recipient_user_id == auth_user.id).first()
+    auth_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
+    crea = db.session.query(models.Creature).filter(
+        models.Creature.id == creature_id and models.Creature.recipient_user_id == auth_user.id).first()
     if request.method == 'GET':
         filename = os.path.join(config.UPLOAD_FOLDER, "creatures", "%s_%s" % (crea.uid, crea.filename))
-        return send_file(filename,attachment_filename="%s_%s" % (crea.uid, crea.filename))
+        return send_file(filename, attachment_filename="%s_%s" % (crea.uid, crea.filename))
     elif request.method == 'DELETE':
         db.session.delete(crea)
         db.session.commit()
@@ -96,21 +116,21 @@ def get_version():
 
 class Messages(Resource):
 
-    @auth.login_required
+    @token_required
     def get(self):
-        auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        auth_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         messages = db.session.query(models.Message).filter(models.Message.recipient_user_id == auth_user.id)
         message_ids = []
         for message in messages:
             message_ids.append(message.id)
         return {"messages": message_ids}
 
-    @auth.login_required
+    @token_required
     def post(self):
         data = request.json
-        sender_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        sender_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         recipient_user = db.session.query(models.User).filter(models.User.username == data['aw_recipient']).first()
-        if recipient_user == None:
+        if recipient_user is None:
             abort(404)
         message = models.Message(recipient=recipient_user, sender=sender_user, data=json.dumps(data))
         db.session.add(message)
@@ -120,21 +140,21 @@ class Messages(Resource):
 
 class Creatures(Resource):
 
-    @auth.login_required
+    @token_required
     def get(self):
-        auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        auth_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         creatures = db.session.query(models.Creature).filter(models.Creature.recipient_user_id == auth_user.id)
         creature_ids = []
         for creature in creatures:
-            creature_ids.append({ "id": creature.id,
-                                "filename": "%s_%s" % (creature.uid, creature.filename)})
+            creature_ids.append({"id": creature.id,
+                                 "filename": "%s_%s" % (creature.uid, creature.filename)})
         return {"creatures": creature_ids}
 
 
 class Message(Resource):
-    @auth.login_required
+    @token_required
     def get(self, message_id):
-        auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        auth_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         message = db.session.query(models.Message).filter(
             models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         data = json.loads(message.data)
@@ -143,9 +163,9 @@ class Message(Resource):
         del data['aw_recipient']
         return data
 
-    @auth.login_required
+    @token_required
     def delete(self, message_id):
-        auth_user = db.session.query(models.User).filter(models.User.username == auth.username()).first()
+        auth_user = db.session.query(models.User).filter(models.User.username == session['user']['username']).first()
         message = db.session.query(models.Message).filter(
             models.Message.recipient_user_id == auth_user.id and models.Message.id == message_id).first()
         db.session.delete(message)
@@ -153,17 +173,19 @@ class Message(Resource):
         return {"message": "successfully deleted message %s" % message.id}
 
 
-@auth.error_handler
-def auth_error():
-    abort(401, message="Unathorized")
-
-
-@auth.verify_password
-def get_password(username, password):
-    result = (db.session.query(models.User).filter(models.User.username == username).first())
-    if result is None:
-        return False
-    return result.check_password(password)
+@app.route('/login')
+def login():
+    authorization = request.authorization
+    user = (db.session.query(models.User).filter(models.User.username == authorization.username).first())
+    if user is None:
+        return make_response('User not found!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+    if user.check_password(authorization.password):
+        token = jwt.encode(
+            {'username': authorization.username,
+             'exp': datetime.datetime.now() + datetime.timedelta(days=7)
+             }, app.config['SECRET_KEY'])
+        return jsonify({'token': token.decode('UTF-8')})
+    return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 
 def init_db():
