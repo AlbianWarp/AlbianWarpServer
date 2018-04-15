@@ -1,4 +1,4 @@
-from warpserver.warpserver import app,init_db
+from warpserver.warpserver import app,init_db, socketio
 import sys
 
 if len(sys.argv) >= 2:
@@ -6,4 +6,4 @@ if len(sys.argv) >= 2:
         init_db()
 
 
-app.run(debug=True,host="0.0.0.0")
+socketio.run(app, debug=False, host="0.0.0.0")

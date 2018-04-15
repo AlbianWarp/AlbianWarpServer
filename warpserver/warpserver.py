@@ -5,6 +5,7 @@ from functools import wraps
 from uuid import uuid4
 from flask import Flask, request, send_file, jsonify, make_response, session
 from flask_restful import Resource, Api, abort
+from flask_socketio import SocketIO, disconnect, emit, send
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 import json
@@ -22,6 +23,66 @@ api = Api(app)
 
 db = SQLAlchemy(app)
 
+socketio = SocketIO(app, ping_timeout=2)
+socketio_sessions = {}
+
+
+@socketio.on('disconnect')
+def socketio_connect():
+    for user in socketio_sessions:
+        if socketio_sessions[user] == request.sid:
+            del socketio_sessions[user]
+            logging.info("%s disconnected from socketio" % user)
+            break
+    logging.info("%s disconnected from socketio" % request.sid)
+
+
+@socketio.on('rtdma')
+def socketion_dma(data):
+    sender = request.sid
+    for derp in socketio_sessions:
+        if socketio_sessions[derp] == request.sid:
+            sender = derp
+            break
+    try:
+        recipient = socketio_sessions[data['aw_recipient']]
+        data['aw_sender'] = sender
+        data['aw_date'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        del data['aw_recipient']
+        print(data)
+        print(type(data))
+        emit('rtdma', data, room=recipient)
+    except KeyError as e:
+        logging.error("aw_recipient user is not online, or does not exist! %s" % e)
+        pass
+# TODO: SEND BACK AN ERROR AS THE RECIPIENT IS NOT ONLINE!!!!
+    except Exception as e:
+        logging.error(e)
+        print(e)
+
+
+@socketio.on('auth')
+def socketio_auth(auth_data):
+    print(request.sid)
+    if 'token' in auth_data:
+        try:
+            username = jwt.decode(auth_data['token'], app.config['SECRET_KEY'])['username']
+        except jwt.DecodeError as e:
+            emit('auth_deny')
+            disconnect()
+            logging.warning("%s did not provide a valid Token! %s" % (request.sid, e))
+            return
+        except Exception as e:
+            logging.error("%s Unhandled exception while decoding the Token! %s" % (request.sid, e))
+            return
+        session['username'] = username
+        socketio_sessions[session['username']] = request.sid
+        emit('auth_acc', {'sid': request.sid})
+    else:
+        emit('auth_deny')
+        disconnect()
+    logging.info({session['username']: request.sid})
+
 
 def token_required(f):
     @wraps(f)
@@ -37,6 +98,12 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+@app.route('/who_is_online')
+@token_required
+def who_is_online():
+    return jsonify(socketio_sessions)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -65,7 +132,14 @@ email: <input type="text" name="email">
 def users():
     tmp = []
     for user in db.session.query(models.User):
-        tmp.append(user.username)
+        online = "offline"
+        try:
+            _ = socketio_sessions[user.username]
+            online = "online"
+        except KeyError as e:
+            online = "offline"
+        finally:
+            tmp.append((user.username, online))
     return json.dumps(tmp)
 
 
