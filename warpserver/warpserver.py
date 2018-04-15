@@ -8,9 +8,12 @@ from flask_restful import Resource, Api, abort
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 import json
+import logging
 
 from . import models
 from . import config
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 config_path = os.path.dirname(os.path.abspath(__file__))
