@@ -2,3 +2,4 @@ flask
 flask-httpauth
 flask-sqlalchemy
 flask-restful
+flask-socketio
