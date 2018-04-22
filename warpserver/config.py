@@ -1,6 +1,21 @@
-SQLALCHEMY_DATABASE_URI = "sqlite:///database.sqlite"
+
+import random
+import string
+import os
+
+# FLASK CONFIGURATION
+DEBUG = bool(os.getenv('AW_DEBUG', True))
+HOST = os.getenv('AW_HOST', '127.0.0.1')
+PORT = int(os.getenv('AW_PORT', '5000'))
+SECRET_KEY = os.getenv(
+    'AW_SECRET_KEY',
+    ''.join([random.choice(string.ascii_letters + string.digits) for n in range(32)])
+)
+
+# SQLALCHEMY CONFIGURATION
+SQLALCHEMY_DATABASE_URI = os.getenv('AW_SQLALCHEMY_DATABASE_URI', 'sqlite:///database.sqlite')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SECRET_KEY = "ucinrev08nc87mcß98fm4597c5mc973mc984mc"
-UPLOAD_FOLDER = "/tmp/AlbianWarpServer/uploads/"
+
+# UPLOAD CONFIGURATION
 MAX_CONTENT_LENGTH = 1024 * 512
-AW_SERVER_VERSION = "alpha andromeda"
+UPLOAD_FOLDER = os.getenv('AW_UPLOAD_FOLDER', '.')
