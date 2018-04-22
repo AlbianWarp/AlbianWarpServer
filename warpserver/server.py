@@ -13,8 +13,13 @@ config_path = os.path.dirname(os.path.abspath(__file__))
 app.config.from_pyfile(os.path.join(config_path, "config.py"))
 db.init_app(app)
 db.app = app
-
 db.create_all()
+
+
+@app.route("/version")
+def version():
+    return "beta baboon"
+
 
 from warpserver.route.auth import auth_blueprint
 
