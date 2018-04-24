@@ -1,6 +1,7 @@
 Flask
-Flask-Cors
+Flask-Sockets
 Flask-RESTful
 Flask-SQLAlchemy
 PyJWT
 uuid
+gevent

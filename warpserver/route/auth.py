@@ -8,3 +8,4 @@ auth_blueprint_api = Api(auth_blueprint)
 
 
 auth_blueprint_api.add_resource(AuthResource, '/auth')
+

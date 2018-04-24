@@ -35,3 +35,10 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def decode_token(token):
+    try:
+        return jwt.decode(token, SECRET_KEY)
+    except Exception as e:
+        return None

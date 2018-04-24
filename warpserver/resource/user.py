@@ -5,14 +5,26 @@ from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
 from warpserver.util import token_required
+from warpserver.sockets import ws_list, refresh_ws_list
 
 
 class UserListResource(Resource):
     """Docstring"""
 
-    @token_required
+#    @token_required
     def get(self):
-        return jsonify(user=[user.to_dict() for user in User.query])
+        refresh_ws_list()
+        tmp = list()
+        for user in User.query:
+            online_status = "offline"
+            try:
+                _ = ws_list[user.username]
+                online_status = "online"
+            except KeyError:
+                online_status = "offline"
+            finally:
+                tmp.append((user.username, online_status))
+        return tmp
 
     def post(self):
         data = request.json
