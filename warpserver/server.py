@@ -23,6 +23,7 @@ sockets = Sockets(app)
 
 app.register_blueprint(register_page)
 
+
 @app.route("/who_is_online")
 def who_is_online():
     refresh_ws_list()

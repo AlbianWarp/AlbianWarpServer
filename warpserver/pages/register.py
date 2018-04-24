@@ -14,7 +14,7 @@ def register_form():
         if user:
             return '<h1>THAT USER ALREADY EXISTS!!!!</h1>', 409
         new_user = User(username=request.form['username'], password=request.form['password'],
-                               email=request.form['email'])
+                        email=request.form['email'])
         db.session.add(new_user)
         db.session.commit()
         return '<h1>USER CREATED!</h1>'

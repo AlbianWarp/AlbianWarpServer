@@ -20,7 +20,7 @@ class CreatureListResource(Resource):
         creature_ids = []
         for creature in creatures:
             creature_ids.append({"id": creature.id,
-                                 "filename": "%s_%s" % (creature.uid, creature.filename)})
+                                 "filename": "%s_%s" % (creature.uuid, creature.filename)})
         return {"creatures": [creature.to_dict() for creature in creatures]}
 
     @token_required
@@ -65,17 +65,17 @@ class CreatureResource(Resource):
 
     @token_required
     def get(self, creature_id):
-        creature = db.session.query_property(Creature).filter(
+        creature = db.session.query(Creature).filter(
             Creature.id == creature_id
             and Creature.recipient_user_id == session['user']['id']).first()
         if not creature:
             return {"message": "creature not found"}, 404
-        file_path = os.path.join(UPLOAD_FOLDER, "creatures", "%s_%s" % (creature.uid, creature.filename))
-        return send_file(file_path, attachment_filename="%s_%s" % (creature.uid, creature.filename))
+        file_path = os.path.join(UPLOAD_FOLDER, "creatures", "%s_%s" % (creature.uuid, creature.filename))
+        return send_file(file_path, attachment_filename="%s_%s" % (creature.uuid, creature.filename))
 
     @token_required
     def delete(self, creature_id):
-        creature = db.session.query_property(Creature).filter(
+        creature = db.session.query(Creature).filter(
             Creature.id == creature_id
             and Creature.recipient_user_id == session['user']['id']).first()
         if not creature:
