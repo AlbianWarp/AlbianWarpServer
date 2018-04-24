@@ -29,7 +29,7 @@ def who_is_online():
     return jsonify(list(ws_list))
 
 
-@sockets.route('/')
+@sockets.route('/ws')
 def echo_socket(ws):
     while not ws.closed:
         message = ws.receive()
