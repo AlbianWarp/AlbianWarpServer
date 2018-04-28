@@ -26,7 +26,6 @@ def check_auth(ws):
 
 
 def send_to_user(user, message):
-    print('sending message to user: %s %s' % (user, message))
     socket_dead_user = None
     for socket in ws_list.keys():
         if socket == user:
@@ -44,25 +43,21 @@ def consumer(message, ws):
     try:
         data = json.loads(message)
         if "auth" in data:
-            print('Handling auth request')
+            print(data)
             user = decode_token(data['auth'])
             if user:
                 ws_list[user['username']] = ws
+                print(user)
                 ws.send(json.dumps({"auth": True}))
-                print('that worked out, token is okey dokey')
             else:
                 ws.send(json.dumps({"auth": False}))
-                print('Nope no auth to you, token is broken!')
         elif check_auth(ws) and "aw_recipient" in data:
-            print('Handling RTDMA')
+            print(data)
+            recipient = data['aw_recipient']
             data['aw_sender'] = check_auth(ws)
-            print('1')
             del data['aw_recipient']
-            print('2')
             data['aw_date'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-            print('3')
-            send_to_user(data['aw_recipient'], json.dumps(data))
-
+            send_to_user(recipient, json.dumps(data))
     except json.JSONDecodeError as e:
         print("NOT JSON! %s" % e)
     except Exception as e:
