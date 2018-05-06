@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  database:
+    image: mariadb:latest
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: U7TFo2utv7OU3V556
+      MYSQL_DATABASE: db_albianwarp
+      MYSQL_USER: albianwarp
+      MYSQL_PASSWORD: I6K2PG7p45zgZG687
+
+
+  warpserver:
+    depends_on:
+      - database
+    build: .
+    volumes:
+      - warpserver_data:/data
+    ports:
+      - "5000:5000"
+    environment:
+      AW_SQLALCHEMY_DATABASE_URI: mysql://albianwarp:I6K2PG7p45zgZG687@database:3306/db_albianwarp
+
+volumes:
+  warpserver_data:
+  db_data:
