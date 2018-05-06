@@ -12,6 +12,9 @@ ENV AW_HOST 0.0.0.0
 ENV AW_PORT 5000
 ENV AW_SQLALCHEMY_DATABASE_URI "sqlite:////data/albianwarp_database.sqlite"
 ENV AW_UPLOAD_FOLDER "/data/uploads/"
+
 VOLUME "/data/"
+EXPOSE 5000:5000
+
 ENTRYPOINT ["python"]
 CMD ["run.py"]
