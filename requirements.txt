@@ -5,3 +5,4 @@ Flask-SQLAlchemy
 PyJWT
 uuid
 gevent
+mysqlclient
