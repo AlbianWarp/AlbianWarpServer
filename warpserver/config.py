@@ -4,7 +4,6 @@ import string
 import os
 
 # FLASK CONFIGURATION
-DEBUG = bool(os.getenv('AW_DEBUG', True))
 HOST = os.getenv('AW_HOST', '127.0.0.1')
 PORT = int(os.getenv('AW_PORT', '5000'))
 SECRET_KEY = os.getenv(
