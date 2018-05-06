@@ -7,9 +7,9 @@ class User(BaseModel):
     """Docsting"""
 
     __tablename__ = 'users'
-    username = db.Column(db.String(30), unique=True)
-    password_hash = db.Column(db.String())
-    email = db.Column(db.String())
+    username = db.Column(db.String(18), unique=True)
+    password_hash = db.Column(db.String(256))
+    email = db.Column(db.String(256))
     power = db.Column(db.Integer())
 
     def __init__(self, username, password, email):
