@@ -74,11 +74,12 @@ class RegistrationForm(FlaskForm):
 @register_page_blueprint.route('/register', methods=['POST', 'GET'])
 def register_form():
     form = RegistrationForm()
+    message = None
     if request.method == 'POST':
         if form.validate_on_submit():
             new_user = User(username=request.form['username'], password=request.form['password'],
                             email=request.form['email'])
             db.session.add(new_user)
             db.session.commit()
-            return '<h1>USER CREATED!</h1>'
-    return render_template('register.html', form=form)
+            message = "User successfully created!"
+    return render_template('register.html', form=form, message=message)
