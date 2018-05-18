@@ -2,6 +2,8 @@ Flask
 Flask-Sockets
 Flask-RESTful
 Flask-SQLAlchemy
+Flask-WTF
+wtforms
 PyJWT
 uuid
 gevent
