@@ -11,7 +11,7 @@ from warpserver.sockets import ws_list, refresh_ws_list
 class UserListResource(Resource):
     """Docstring"""
 
-#    @token_required
+    @token_required
     def get(self):
         refresh_ws_list()
         tmp = list()
