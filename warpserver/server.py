@@ -10,7 +10,7 @@ logger = logging.getLogger('albianwarp')
 logger.setLevel(logging.DEBUG)
 
 from warpserver.sockets import ws_list, refresh_ws_list, consumer
-from warpserver.pages import register_page
+from warpserver.pages import register_page_blueprint, home_page_blueprint
 
 
 app = Flask(__name__)
@@ -21,8 +21,8 @@ db.app = app
 db.create_all()
 sockets = Sockets(app)
 
-app.register_blueprint(register_page)
-
+app.register_blueprint(register_page_blueprint)
+app.register_blueprint(home_page_blueprint)
 
 @app.route("/who_is_online")
 def who_is_online():

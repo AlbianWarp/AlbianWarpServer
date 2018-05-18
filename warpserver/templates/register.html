@@ -1,3 +1,4 @@
+{% extends "layout.html" %}
 {% macro render_field(field) %}
   <dt>{{ field.label }}
   <dd>{{ field(**kwargs)|safe }}
@@ -11,14 +12,22 @@
   </dd>
 {% endmacro %}
 
-<form name="register_form"  method="POST">
-    {{ form.csrf_token }}
-    <dl>
-        {{ render_field(form.username) }}
-        {{ render_field(form.email) }}
-        {{ render_field(form.email_confirmation) }}
-        {{ render_field(form.password) }}
-        {{ render_field(form.password_confirmation) }}
-    </dl>
-    <p></p><input type="submit" value="register">
-</form>
+{% set page_title = 'Register' %}
+
+{% block content %}
+<div class="col-lg-12">
+    <br />
+    <h2>Registration</h2>
+    <form name="register_form"  method="POST">
+        {{ form.csrf_token }}
+        <dl>
+            {{ render_field(form.username) }}
+            {{ render_field(form.email) }}
+            {{ render_field(form.email_confirmation) }}
+            {{ render_field(form.password) }}
+            {{ render_field(form.password_confirmation) }}
+        </dl>
+        <p></p><input type="submit" value="register">
+    </form>
+</div>
+{% endblock %}

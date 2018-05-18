@@ -11,8 +11,8 @@ from wtforms.fields.html5 import EmailField
 from warpserver.model.base import db
 from warpserver.model import User
 
-register_page = Blueprint('register', __name__,
-                          template_folder='templates')
+register_page_blueprint = Blueprint('register', __name__,
+                                    template_folder='templates')
 
 
 class Unique(object):
@@ -71,7 +71,7 @@ class RegistrationForm(FlaskForm):
                                           ])
 
 
-@register_page.route('/register', methods=['POST', 'GET'])
+@register_page_blueprint.route('/register', methods=['POST', 'GET'])
 def register_form():
     form = RegistrationForm()
     if request.method == 'POST':
