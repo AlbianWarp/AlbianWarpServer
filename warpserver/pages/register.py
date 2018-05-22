@@ -69,7 +69,9 @@ class RegistrationForm(FlaskForm):
                                               Length(min=8),
                                               EqualTo('password', message='password must match')
                                           ])
-    accept_legal_stuff = BooleanField('I agree to the <a target="_blank" href="/tos">Terms of Service and Privacy Policy</a>', validators=[DataRequired()])
+    accept_legal_stuff = BooleanField(
+        'I agree to the <a target="_blank" href="/tos">Terms of Service and Privacy Policy</a>!',
+        validators=[DataRequired()])
     age_checkbox = BooleanField('I am atleast 13 years old!', validators=[DataRequired()])
 
 
