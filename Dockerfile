@@ -1,6 +1,6 @@
 FROM python:3-slim
 MAINTAINER KeyboardInterrupt
-RUN apt-get update -y && apt-get install -y python3-dev default-libmysqlclient-dev python-pip
+RUN apt-get update -y && apt-get install -y python3-dev libmysqlclient-dev python-pip
 COPY . /app
 WORKDIR /app
 RUN mkdir -p /data/uploads/creatures
