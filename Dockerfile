@@ -15,6 +15,5 @@ ENV AW_UPLOAD_FOLDER "/data/uploads/"
 
 VOLUME "/data/"
 EXPOSE 5000:5000
-git stash
 ENTRYPOINT ["python"]
 CMD ["run.py"]
