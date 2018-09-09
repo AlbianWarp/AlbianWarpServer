@@ -4,7 +4,7 @@ from flask import Blueprint, request, render_template
 
 from flask_wtf import FlaskForm
 
-from wtforms import StringField, PasswordField
+from wtforms import StringField, PasswordField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
 from wtforms.fields.html5 import EmailField
 
@@ -69,6 +69,10 @@ class RegistrationForm(FlaskForm):
                                               Length(min=8),
                                               EqualTo('password', message='password must match')
                                           ])
+    accept_legal_stuff = BooleanField(
+        'I agree to the <a target="_blank" href="/tos">Terms of Service</a> and <a href="privacy_policy">Privacy Policy</a>!',
+        validators=[DataRequired()])
+    age_checkbox = BooleanField('I am atleast 13 years old!', validators=[DataRequired()])
 
 
 @register_page_blueprint.route('/register', methods=['POST', 'GET'])
