@@ -14,6 +14,5 @@ ENV AW_UPLOAD_FOLDER "/data/uploads/"
 
 VOLUME "/data/"
 EXPOSE 5000:5000
-
 ENTRYPOINT ["python"]
 CMD ["run.py"]
