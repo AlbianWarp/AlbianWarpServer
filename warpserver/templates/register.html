@@ -5,7 +5,10 @@
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
-      <li>{{ error }}</li>
+        <div class="alert alert-dismissible alert-danger" style="width: 250px;">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <strong>{{ error }}</strong>
+        </div>
     {% endfor %}
     </ul>
   {% endif %}
@@ -32,9 +35,9 @@
             {{ render_field(form.password) }}
             {{ render_field(form.password_confirmation) }}
             {{ render_field(form.accept_legal_stuff) }}
-            {{ render_field(form.age_checkbox) }}
+{#            {{ render_field(form.age_checkbox) }} #}
         </dl>
-        <p></p><input type="submit" value="register">
+        <p></p><input type="submit" class="btn btn-primary" value="register">
     </form>
 </div>
 {% endblock %}

@@ -10,8 +10,7 @@
 
 {%  set pages = [
 {'title': 'Home', 'path': '/home'},
-{'title': 'Terms of Service', 'path': '/tos'},
-{'title': 'Privacy Policy', 'path': '/privacy_policy'},
+{'title': 'AW Client Downloads', 'path': 'https://github.com/AlbianWarp/AlbianWarpClient/releases'},
 {'title': 'Register', 'path': '/register'}
 ] %}
 
@@ -29,6 +28,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/sticky-footer.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <style>
@@ -46,9 +46,9 @@
   </head>
 
   <body>
-
+<main>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
       <div class="container">
         <a class="navbar-brand" href="#">Albian Warp</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,10 +66,15 @@
         {% block content %}{% endblock %}
       </div>
     </div>
-
+  </main>
     <!-- Bootstrap core JavaScript -->
     <script src="static/js/jquery.js"></script>
     <script src="static/js/bootstrap.bundle.js"></script>
+    <footer class="footer">
+      <div class="container">
+        <span class="text-muted">Please read our <a href="/tos">Terms of Service</a> and <a href="privacy_policy">Privacy Policy</a>. Thank You.</span>
+      </div>
+    </footer>
 
   </body>
 

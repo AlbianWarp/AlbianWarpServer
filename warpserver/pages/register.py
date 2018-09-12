@@ -72,7 +72,7 @@ class RegistrationForm(FlaskForm):
     accept_legal_stuff = BooleanField(
         'I agree to the <a target="_blank" href="/tos">Terms of Service</a> and <a href="privacy_policy">Privacy Policy</a>!',
         validators=[DataRequired()])
-    age_checkbox = BooleanField('I am atleast 13 years old!', validators=[DataRequired()])
+#    age_checkbox = BooleanField('I am atleast 13 years old!', validators=[DataRequired()])
 
 
 @register_page_blueprint.route('/register', methods=['POST', 'GET'])
