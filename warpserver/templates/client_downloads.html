@@ -14,13 +14,16 @@
         <h3 class="card-header">{{ latest_release.name }}</h3>
         <div class="card-block px-3 mb-3 mt-2">
             <h5 class="card-title">Version: {{ latest_release.tag_name }}</h5>
-            <p class="card-text">{{ latest_release.body }}</p>
+            <p class="card-text">{{ latest_release.body }}<br /> <br />
+                <a href="{{ latest_release.html_url }}" class="btn btn-primary">This Release on Github!</a>
+            </p>
             <h5>Downloads:</h5>
             <ul>
             {% for asset in latest_release.assets %}
                 <li><a href="{{ asset.browser_download_url }}">{{ asset.name }}</a></li>
             {% endfor %}
             </ul>
+
         </div>
     </div>
     <br />
