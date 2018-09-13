@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 
 
 import requests
@@ -22,5 +22,13 @@ def get_client_release_informations_from_github():
 
 
 @client_downloads_page_blueprint.route('/client_downloads', methods=['GET'])
-def home_page():
+def downloads_page():
     return render_template('client_downloads.html', latest_release=get_latest_client_release_information_from_github(), releases=get_client_release_informations_from_github())
+
+@client_downloads_page_blueprint.route('/client_latest.json', methods=['GET'])
+def client_latest():
+    return jsonify(get_latest_client_release_information_from_github())
+
+@client_downloads_page_blueprint.route('/client_releases.json', methods=['GET'])
+def client_releases():
+    return jsonify(get_client_release_informations_from_github())
