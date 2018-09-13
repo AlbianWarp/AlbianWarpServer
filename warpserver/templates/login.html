@@ -10,28 +10,24 @@
   </dd>
 {% endmacro %}
 
-{% set page_title = 'Register' %}
+{% set page_title = 'Login' %}
 
 {% block content %}
 <div class="col-lg-12">
-    <h2>Registration</h2>
+    <h2>Login</h2>
     {% if message %}
-    <div class="alert alert-success" role="alert">
+    <div class="alertalert-danger" role="alert">
         {{ message }}
     </div>
     {% endif %}
-    <form name="register_form"  method="POST">
+
+    <form name="login_form"  method="POST">
         {{ form.csrf_token }}
         <dl>
             {{ render_field(form.username) }}
-            {{ render_field(form.email) }}
-            {{ render_field(form.email_confirmation) }}
             {{ render_field(form.password) }}
-            {{ render_field(form.password_confirmation) }}
-            {{ render_field(form.accept_legal_stuff) }}
-{#            {{ render_field(form.age_checkbox) }} #}
         </dl>
-        <p></p><input type="submit" class="btn btn-primary" value="register">
+        <p></p><input type="submit" class="btn btn-primary" value="login">
     </form>
 </div>
 {% endblock %}
