@@ -8,3 +8,4 @@ PyJWT
 uuid
 gevent
 mysqlclient
+requests

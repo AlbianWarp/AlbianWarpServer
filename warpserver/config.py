@@ -19,3 +19,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 MAX_CONTENT_LENGTH = 1024 * 512
 UPLOAD_FOLDER = os.getenv('AW_UPLOAD_FOLDER', '.')
 
+# GITHUB_CONFIGURATION
+
+CLIENT_GITHUB_API_URL = os.getenv('AW_CLIENT_GITHUB_API_URL', 'https://api.github.com/repos/KeyboardInterrupt/AlbianWarpClient')
+GAME_MODIFICATIONS_GITHUB_API_URL = os.getenv('AW_GAME_MODIFICATIONS_GITHUB_API_URL', 'https://api.github.com/repos/KeyboardInterrupt/AlbianWarpGameModifications')

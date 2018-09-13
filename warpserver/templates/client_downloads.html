@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% set page_title = 'Client Downloads' %}
+
+{% block content %}
+<div class="col-lg-12">
+    <br />
+    <h1>Albian Warp Client Downloads</h1>
+    <p>On this Page you can find Links to all available Albian Warp Client versions.<br />It is highly recommended to download the latest Albian Warp Client.<br /> If you need an older, or not jet released Client, head over to <a href="https://github.com/AlbianWarp/AlbianWarpClient/releases">Github</a>.</p>
+    <br />
+    <h2>Lates Albian Warp Client:</h2>
+    <br />
+    <div class="card">
+        <h3 class="card-header">{{ latest_release.name }}</h3>
+        <div class="card-block px-3 mb-3 mt-2">
+            <h5 class="card-title">Version: {{ latest_release.tag_name }}</h5>
+            <p class="card-text">{{ latest_release.body }}</p>
+
+            <h5>Downloads:</h5>
+            <ul>
+            {% for asset in latest_release.assets %}
+                <li><a href="{{ asset.browser_download_url }}">{{ asset.name }}</a></li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <br />
+    <h2>Older Albian Warp Clients:</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Version</th>
+                <th scope="col">Name</th>
+                <th scope="col">Link</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for release in releases %}
+        {% if release.tag_name != latest_release.tag_name %}
+            <tr>
+                <th scope="row">{{ release.tag_name }}</th>
+                <td>{{ release.name }}</td>
+                <td><a href="{{ release.html_url }}">{{ release.html_url }}</a></td>
+            </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+</div>
+{% endblock %}
