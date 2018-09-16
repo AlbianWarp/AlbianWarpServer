@@ -34,6 +34,9 @@
     <!-- Bootstrap core CSS -->
     <link href="/static/css/bootstrap.css" rel="stylesheet">
     <link href="/static/css/sticky-footer.css" rel="stylesheet">
+    <link href="/static/css/admin.css" rel="stylesheet">
+    <link href="/static/css/fontawesome-free.css" rel="stylesheet">
+    <link href="/static/css/datatables.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <style>
@@ -44,35 +47,40 @@
     </head>
 
     <body>
-        <main>
-            <!-- Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-                <div class="container">
-                    <a class="navbar-brand" href="/home" style="larger; font-weight: bold;">Albian Warp</a>
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarResponsive">
-                        {{ render_navigation(pages, page_title) }}
-                    </div>
+    <script type="text/javascript" src="static/js/jquery.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap.bundle.js"></script>
+    <script type="text/javascript" src="static/js/datatables.js"></script>
+    <main>
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+            <div class="container">
+                <a class="navbar-brand" href="/home" style="larger; font-weight: bold;">Albian Warp</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    {{ render_navigation(pages, page_title) }}
                 </div>
-            </nav>
+            </div>
+        </nav>
 
-            <!-- Page Content -->
-            <div class="container">
-                <div class="row">
-                    {% block content %}{% endblock %}
-                </div>
+        <!-- Page Content -->
+        <div class="container">
+            <div class="row">
+                {% block content %}{% endblock %}
             </div>
-        </main>
-        <!-- Bootstrap core JavaScript -->
-        <script src="static/js/jquery.js"></script>
-        <script src="static/js/bootstrap.bundle.js"></script>
-        <footer class="footer">
-            <div class="container">
-                <span class="text-muted">Please read our <a href="/tos">Terms of Service</a> and <a href="privacy_policy">Privacy Policy</a>. Thank You!</span>
-            </div>
-        </footer>
+        </div>
+    </main>
+    <script>
+        $(document).ready( function () {
+           var table =  $('#dataTable').DataTable({});
+        } );
+    </script>
+    <footer class="footer">
+        <div class="container">
+            <span class="text-muted">Please read our <a href="/tos">Terms of Service</a> and <a href="privacy_policy">Privacy Policy</a>. Thank You!</span>
+        </div>
+    </footer>
 
     </body>
 

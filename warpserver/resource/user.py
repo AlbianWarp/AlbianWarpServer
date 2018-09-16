@@ -1,10 +1,10 @@
-from flask import jsonify, request
+from flask import request
 from flask_restful import Resource
 
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import token_required
+from warpserver.util import token_required, admin_required
 from warpserver.sockets import ws_list, refresh_ws_list
 
 
@@ -49,4 +49,14 @@ class UserResource(Resource):
             return {"message": "user does not exist"}, 404
         return user.to_dict(), 200
 
-# todo: delete
+    @token_required
+    @admin_required
+    def delete(self, user_id):
+        user = db.session.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"message": "user does not exist"}, 404
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "successfully deleted user %s" % user.id}, 200
+
+

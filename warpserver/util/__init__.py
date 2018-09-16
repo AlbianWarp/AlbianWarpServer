@@ -2,16 +2,20 @@ import jwt
 
 import time
 from functools import wraps
-from flask import request, session
+from flask import request, session, render_template
 
+from warpserver.model.base import db
 from warpserver.server import logger
 from warpserver.config import SECRET_KEY
+from warpserver.model.user import User
 
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('token')
+        if not token:
+            token = session.get('token')
         if not token:
             logger.warning(
                 '%s/%s tried to access "%s" without a token!' % (
@@ -35,6 +39,21 @@ def token_required(f):
             return {'message': 'token is broken'}, 403
         return f(*args, **kwargs)
 
+    return decorated
+
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('user')['id']:
+            return render_template('error.html', statuscode=401, message="You are not logged in!?!"), 401
+        print(session.get('user')['id'])
+        user = db.session.query(User).filter(User.id == session.get('user')['id']).first()
+        print(user)
+        if int(user.power) < 10:
+            return render_template('error.html', statuscode=403, message="You are not logged in!?!"), 403
+        return f(*args, **kwargs)
     return decorated
 
 

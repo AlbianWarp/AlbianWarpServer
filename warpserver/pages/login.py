@@ -4,12 +4,12 @@ from flask import Blueprint, request, render_template, session, redirect
 
 from flask_wtf import FlaskForm
 
-from wtforms import StringField, PasswordField, BooleanField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
-from wtforms.fields.html5 import EmailField
+from wtforms import StringField, PasswordField
+from wtforms.validators import DataRequired
 
 from warpserver.model.base import db
 from warpserver.model import User
+from warpserver.resource.auth import tokenize_user
 
 login_page_blueprint = Blueprint('login', __name__,
                                     template_folder='templates')
@@ -37,6 +37,7 @@ def login_form():
             if user:
                 if user.check_password(request.form['password']):
                     session['logged_in'] = True
+                    session['token'] = tokenize_user(user)
                     session['user_id'] = user.id
                     session['user_name'] = user.username
                     return redirect("/home")

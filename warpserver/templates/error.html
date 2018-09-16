@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% set page_title = 'Error' %}
+
+{% block content %}
+<div class="col-lg-12">
+    <h1>ERROR: {{ statuscode }}</h1>
+    <h2>{{ message }}</h2>
+    <img src="static/images/error.gif">
+</div>
+{% endblock %}

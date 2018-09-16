@@ -10,7 +10,9 @@ class User(BaseModel):
     username = db.Column(db.String(18), unique=True)
     password_hash = db.Column(db.String(256))
     email = db.Column(db.String(256))
-    power = db.Column(db.Integer())
+    power = db.Column(db.Integer(), default=0)
+    note = db.Column(db.Text, default="")
+    locked = db.Column(db.Boolean, default=False)
 
     def __init__(self, username, password, email):
         self.username = username

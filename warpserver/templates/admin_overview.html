@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+{% set page_title = 'Home' %}
+
+{% block content %}
+<div class="col-lg-12">
+    <h1>Admin Dashboard</h1>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="/admin">Admin Dashboard</a>
+        </li>
+        <li class="breadcrumb-item active">Overview</li>
+    </ol>
+    <hr>
+</div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <h3>User</h3>
+        <div class="card text-white bg-primary o-hidden h-100">
+            <div class="card-body">
+                <div class="card-body-icon">
+                    <i class="fas fa-fw fa-users"></i>
+                </div>
+                <div class="mr-5">42 User (5 online)</div>
+            </div>
+            <a class="card-footer text-white clearfix small z-1" href="#">
+                <span class="float-left">View Details</span>
+                <span class="float-right">
+                    <i class="fas fa-angle-right"></i>
+                </span>
+            </a>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <h3>Tickets</h3>
+        <div class="card text-white bg-danger o-hidden h-100">
+            <div class="card-body">
+                <div class="card-body-icon">
+                    <i class="fas fa-fw fa-medkit"></i>
+                </div>
+                <div class="mr-5">5 Tickets</div>
+            </div>
+            <a class="card-footer text-white clearfix small z-1" href="#">
+                <span class="float-left">View Details</span>
+                <span class="float-right">
+                    <i class="fas fa-angle-right"></i>
+                </span>
+            </a>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <h3>Creatures</h3>
+        <div class="card text-gray bg-faded o-hidden h-100">
+            <div class="card-body">
+                <div class="card-body-icon">
+                    <i class="fas fa-fw fa-dna"></i>
+                </div>
+                <div class="mr-5">130 Creatures</div>
+            </div>
+            <div class="card-footer text-gray clearfix small z-1" href="#">
+                <span class="float-left">Not yet implemented</span>
+                <span class="float-right">
+                    <i class="fas fa-minus"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6 mb-3">
+        <h3>Messages</h3>
+        <div class="card text-gray bg-faded o-hidden h-100">
+            <div class="card-body">
+                <div class="card-body-icon">
+                    <i class="fas fa-fw fa-envelope"></i>
+                </div>
+                <div class="mr-5">15 Messages</div>
+            </div>
+            <div class="card-footer text-gray clearfix small z-1" href="#">
+                <span class="float-left">Not yet implemented</span>
+                <span class="float-right">
+                    <i class="fas fa-minus"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+<hr>
+
+{% endblock %}

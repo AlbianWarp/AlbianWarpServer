@@ -11,6 +11,16 @@ from warpserver.util import token_required
 from warpserver.config import SECRET_KEY
 
 
+def tokenize_user(user):
+    token = jwt.encode(
+        {
+            'id': user.id,
+            'username': user.username,
+            'exp': datetime.datetime.now() + datetime.timedelta(days=7)
+        }, SECRET_KEY)
+
+    return token.decode('UTF-8')
+
 class AuthResource(Resource):
     """Docstring"""
 
@@ -25,11 +35,6 @@ class AuthResource(Resource):
         user = db.session.query(User).filter(User.username == data['username']).first()
         if not user or not user.check_password(data['password']):
             return {"message": "username or password false"}, 401
-        token = jwt.encode(
-            {
-                'id': user.id,
-                'username': user.username,
-                'exp': datetime.datetime.now() + datetime.timedelta(days=7)
-            }, SECRET_KEY)
-        logger.info("user %s created" % data['username'])
-        return {"token": token.decode('UTF-8')}, 200
+        logger.info("user %s token generated" % data['username'])
+        return {"token": tokenize_user(user)}, 200
+
