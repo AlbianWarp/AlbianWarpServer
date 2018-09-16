@@ -32,11 +32,11 @@
     <title> Albian Warp Gameserver- {{ page_title }}</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="/static/css/bootstrap.css" rel="stylesheet">
-    <link href="/static/css/sticky-footer.css" rel="stylesheet">
-    <link href="/static/css/admin.css" rel="stylesheet">
-    <link href="/static/css/fontawesome-free.css" rel="stylesheet">
-    <link href="/static/css/datatables.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sticky-footer.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/fontawesome-free.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/datatables.css') }}" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <style>
@@ -47,9 +47,9 @@
     </head>
 
     <body>
-    <script type="text/javascript" src="static/js/jquery.js"></script>
-    <script type="text/javascript" src="static/js/bootstrap.bundle.js"></script>
-    <script type="text/javascript" src="static/js/datatables.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/datatables.js') }}"></script>
     <main>
         <!-- Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">

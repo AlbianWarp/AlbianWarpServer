@@ -13,10 +13,10 @@ admin_page_blueprint = Blueprint('admin', __name__,
 @token_required
 @admin_required
 def admin_overview():
-    return render_template('admin_overview.html', session=session)
+    return render_template('admin_dashboard.html', session=session)
 
 
-@admin_page_blueprint.route('/admin_user', methods=['GET'])
+@admin_page_blueprint.route('/admin/user', methods=['GET'])
 @token_required
 @admin_required
 def admin_user():
@@ -24,5 +24,5 @@ def admin_user():
     users_dict  = []
     for user in users:
         users_dict.append({'id': user.id, 'name': user.username, 'email': user.email, 'power': user.power})
-    return render_template('admin_user.html', users=users, session=session)
+    return render_template('admin_user_overview.html', users=users, session=session)
 
