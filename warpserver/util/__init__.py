@@ -2,7 +2,7 @@ import jwt
 
 import time
 from functools import wraps
-from flask import request, session, render_template
+from flask import request, session, render_template, jsonify
 
 from warpserver.model.base import db
 from warpserver.server import logger
@@ -24,7 +24,7 @@ def token_required(f):
                     str(f.__name__)
                 )
             )
-            return {'message': 'token not found'}, 403
+            return jsonify({'message': 'token not found'}), 403
         try:
             session['user'] = jwt.decode(token, SECRET_KEY)
         except Exception as e:
@@ -36,11 +36,9 @@ def token_required(f):
                     str(e)
                 )
             )
-            return {'message': 'token is broken'}, 403
+            return jsonify({'message': 'token is broken'}), 403
         return f(*args, **kwargs)
-
     return decorated
-
 
 
 def admin_required(f):
