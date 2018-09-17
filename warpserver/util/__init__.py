@@ -24,7 +24,7 @@ def token_required(f):
                     str(f.__name__)
                 )
             )
-            return jsonify({'message': 'token not found'}), 403
+            return {'message': 'You shall not pass! (token not found)'}, 403
         try:
             session['user'] = jwt.decode(token, SECRET_KEY)
         except Exception as e:
@@ -36,7 +36,7 @@ def token_required(f):
                     str(e)
                 )
             )
-            return jsonify({'message': 'token is broken'}), 403
+            return {'message': 'You shall not pass! (token is broken)'}, 403
         return f(*args, **kwargs)
     return decorated
 
@@ -50,10 +50,9 @@ def admin_required(f):
         user = db.session.query(User).filter(User.id == session.get('user')['id']).first()
         print(user)
         if int(user.power) < 10:
-            return render_template('error.html', statuscode=403, message="You are not logged in!?!"), 403
+            return {'message': 'You have no power here! (not admin)'}, 403
         return f(*args, **kwargs)
     return decorated
-
 
 def decode_token(token):
     try:
