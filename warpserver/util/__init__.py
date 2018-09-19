@@ -63,7 +63,7 @@ def decode_token(token):
         return None
 
 
-class memoized_ttl(object):
+class MemoizedTTL(object):
     """Decorator that caches a function's return value each time it is called within a TTL
     If called within the TTL and the same arguments, the cached value is returned,
     If called outside the TTL or a different value, a fresh value is returned.
