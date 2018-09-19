@@ -32,6 +32,24 @@ def user_power_lvl_check(min_power_lvl):
     return True
 
 
+def web_token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token_check_result, token_check_message = request_token_check()
+        if not token_check_result:
+            logger.warning(
+                '%s/%s Problem with token! tried to access "%s" - %s' % (
+                    request.remote_addr,
+                    request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-",
+                    str(f.__name__),
+                    token_check_message
+                )
+            )
+            return render_template('error.html', message=token_check_message), 403
+        return f(*args, **kwargs)
+    return decorated
+
+
 def api_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -63,6 +81,23 @@ def api_admin_required(f):
                 )
             )
             return {'message': 'You have no power here! (not admin)'}, 403
+        return f(*args, **kwargs)
+    return decorated
+
+
+def web_admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not user_power_lvl_check(10):
+            logger.warning(
+                '%s/%s Non admin tried to access "%s" - Username: %s' % (
+                    request.remote_addr,
+                    request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-",
+                    str(f.__name__),
+                    session.get('user')['username']
+                )
+            )
+            return render_template('error.html', message='You have no power here! (not admin)'), 403
         return f(*args, **kwargs)
     return decorated
 
