@@ -50,7 +50,7 @@ def api_token_required(f):
     return decorated
 
 
-def admin_required(f):
+def api_admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not user_power_lvl_check(10):

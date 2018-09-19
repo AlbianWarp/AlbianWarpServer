@@ -4,7 +4,7 @@ from flask_restful import Resource
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import api_token_required, admin_required
+from warpserver.util import api_token_required, api_admin_required
 from warpserver.sockets import ws_list, refresh_ws_list
 
 
@@ -50,7 +50,7 @@ class UserResource(Resource):
         return user.to_dict(), 200
 
     @api_token_required
-    @admin_required
+    @api_admin_required
     def delete(self, user_id):
         user = db.session.query(User).filter(User.id == user_id).first()
         if not user:
