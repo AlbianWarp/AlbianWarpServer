@@ -23,6 +23,15 @@ def request_token_check():
     return True, "token is ok! session['user']"
 
 
+def user_power_lvl_check(min_power_lvl):
+    if not session.get('user')['id']:
+        raise Exception('Not logged in')
+    user = db.session.query(User).filter(User.id == session.get('user')['id']).first()
+    if int(user.power) < min_power_lvl:
+        return False
+    return True
+
+
 def api_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -38,19 +47,21 @@ def api_token_required(f):
             )
             return {'message': token_check_message}, 403
         return f(*args, **kwargs)
-
     return decorated
 
 
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get('user')['id']:
-            return render_template('error.html', statuscode=401, message="You are not logged in!?!"), 401
-        print(session.get('user')['id'])
-        user = db.session.query(User).filter(User.id == session.get('user')['id']).first()
-        print(user)
-        if int(user.power) < 10:
+        if not user_power_lvl_check(10):
+            logger.warning(
+                '%s/%s Non admin tried to access "%s" - Username: %s' % (
+                    request.remote_addr,
+                    request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-",
+                    str(f.__name__),
+                    session.get('user')['username']
+                )
+            )
             return {'message': 'You have no power here! (not admin)'}, 403
         return f(*args, **kwargs)
     return decorated
@@ -68,7 +79,6 @@ class MemoizedTTL(object):
     If called within the TTL and the same arguments, the cached value is returned,
     If called outside the TTL or a different value, a fresh value is returned.
     """
-
     def __init__(self, ttl):
         self.cache = {}
         self.ttl = ttl
