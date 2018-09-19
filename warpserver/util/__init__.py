@@ -10,34 +10,35 @@ from warpserver.config import SECRET_KEY
 from warpserver.model.user import User
 
 
+def request_token_check():
+    token = request.headers.get('token')
+    if not token:
+        token = session.get('token')
+    if not token:
+        return False, "token not found"
+    try:
+        session['user'] = jwt.decode(token, SECRET_KEY)
+    except Exception as e:
+        return False, "token is broken - %s" % str(e)
+    return True, "token is ok! session['user']"
+
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get('token')
-        if not token:
-            token = session.get('token')
-        if not token:
+        token_check_result, token_check_message = request_token_check()
+        if not token_check_result:
             logger.warning(
-                '%s/%s tried to access "%s" without a token!' % (
-                    request.remote_addr,
-                    request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-",
-                    str(f.__name__)
-                )
-            )
-            return {'message': 'You shall not pass! (token not found)'}, 403
-        try:
-            session['user'] = jwt.decode(token, SECRET_KEY)
-        except Exception as e:
-            logger.error(
-                '%s/%s tried to access "%s" with a broken token! %s' % (
+                '%s/%s Problem with token! tried to access "%s" - %s' % (
                     request.remote_addr,
                     request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-",
                     str(f.__name__),
-                    str(e)
+                    token_check_message
                 )
             )
-            return {'message': 'You shall not pass! (token is broken)'}, 403
+            return {'message': token_check_message}, 403
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -54,6 +55,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
+
 def decode_token(token):
     try:
         return jwt.decode(token, SECRET_KEY)
@@ -66,6 +68,7 @@ class memoized_ttl(object):
     If called within the TTL and the same arguments, the cached value is returned,
     If called outside the TTL or a different value, a fresh value is returned.
     """
+
     def __init__(self, ttl):
         self.cache = {}
         self.ttl = ttl
@@ -84,4 +87,5 @@ class memoized_ttl(object):
                 return value
             except TypeError:
                 return f(*args)
+
         return wrapped_f
