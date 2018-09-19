@@ -7,7 +7,7 @@ from flask_restful import Resource
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import token_required
+from warpserver.util import api_token_required
 from warpserver.config import SECRET_KEY
 
 
@@ -24,7 +24,7 @@ def tokenize_user(user):
 class AuthResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self):
         return db.session.query(User).filter(User.id == session['user']['id']).first().to_dict()
 

@@ -4,14 +4,14 @@ from flask_restful import Resource
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import token_required, admin_required
+from warpserver.util import api_token_required, admin_required
 from warpserver.sockets import ws_list, refresh_ws_list
 
 
 class UserListResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self):
         refresh_ws_list()
         tmp = list()
@@ -49,7 +49,7 @@ class UserResource(Resource):
             return {"message": "user does not exist"}, 404
         return user.to_dict(), 200
 
-    @token_required
+    @api_token_required
     @admin_required
     def delete(self, user_id):
         user = db.session.query(User).filter(User.id == user_id).first()

@@ -23,7 +23,7 @@ def request_token_check():
     return True, "token is ok! session['user']"
 
 
-def token_required(f):
+def api_token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token_check_result, token_check_message = request_token_check()
