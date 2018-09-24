@@ -4,14 +4,16 @@ from flask_restful import Resource
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import token_required, admin_required
+from warpserver.util import api_token_required, api_admin_required
 from warpserver.sockets import ws_list, refresh_ws_list
+
+from sqlalchemy import exc
 
 
 class UserListResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self):
         refresh_ws_list()
         tmp = list()
@@ -49,8 +51,8 @@ class UserResource(Resource):
             return {"message": "user does not exist"}, 404
         return user.to_dict(), 200
 
-    @token_required
-    @admin_required
+    @api_token_required
+    @api_admin_required
     def delete(self, user_id):
         user = db.session.query(User).filter(User.id == user_id).first()
         if not user:
@@ -59,4 +61,34 @@ class UserResource(Resource):
         db.session.commit()
         return {"message": "successfully deleted user %s" % user.id}, 200
 
-
+    @api_token_required
+    @api_admin_required
+    def patch(self, user_id):
+        data = request.json
+        user = db.session.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"message": "user does not exist"}, 404
+        if 'password' in data:
+            user.hash_password(password=data['password'])
+        if 'username' in data:
+            user.username = data['username']
+        if 'power' in data:
+            user.power = data['power']
+        if 'email' in data:
+            user.email = data['email']
+        if 'note' in data:
+            user.note = data['note']
+        if 'locked' in data:
+            user.locked = data['locked']
+        try:
+            db.session.commit()
+        except exc.IntegrityError as e:
+            logger.error(
+                '%s/%s Could not update user! tried to access "%s" - %s' % (
+                    request.remote_addr,
+                    request.headers['X-Forwarded-For'] if 'X-Forwarded-For' in request.headers else "-", "/user/%s" % user_id,
+                    str(e)
+                )
+            )
+            return {'message': 'Integrity error, (Probably Unique constraint, Check log for more Information)'}, 500
+        return {'message': 'User updated'}, 200

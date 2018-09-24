@@ -8,13 +8,13 @@ from warpserver.server import logger
 from warpserver.config import UPLOAD_FOLDER
 from warpserver.model import Creature, User
 from warpserver.model.base import db
-from warpserver.util import token_required
+from warpserver.util import api_token_required
 from werkzeug.utils import secure_filename
 
 
 class CreatureListResource(Resource):
 
-    @token_required
+    @api_token_required
     def get(self):
         creatures = db.session.query(Creature).filter(Creature.recipient_user_id == session['user']['id'])
         creature_ids = []
@@ -23,7 +23,7 @@ class CreatureListResource(Resource):
                                  "filename": "%s_%s" % (creature.uuid, creature.filename)})
         return {"creatures": [creature.to_dict() for creature in creatures]}
 
-    @token_required
+    @api_token_required
     def post(self):
         if any(key not in request.files for key in ['file']):
             return {"message": "bad request"}, 400
@@ -63,7 +63,7 @@ class CreatureListResource(Resource):
 class CreatureResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self, creature_id):
         creature = db.session.query(Creature).filter(
             Creature.id == creature_id
@@ -73,7 +73,7 @@ class CreatureResource(Resource):
         file_path = os.path.join(UPLOAD_FOLDER, "creatures", "%s_%s" % (creature.uuid, creature.filename))
         return send_file(file_path, attachment_filename="%s_%s" % (creature.uuid, creature.filename))
 
-    @token_required
+    @api_token_required
     def delete(self, creature_id):
         creature = db.session.query(Creature).filter(
             Creature.id == creature_id

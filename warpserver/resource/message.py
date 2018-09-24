@@ -5,18 +5,18 @@ from flask_restful import Resource
 
 from warpserver.model import User, Message
 from warpserver.model.base import db
-from warpserver.util import token_required
+from warpserver.util import api_token_required
 
 
 class MessageListResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self):
         messages = db.session.query(Message).filter(Message.recipient_user_id == session['user']['id'])
         return {"messages": [message.id for message in messages]}
 
-    @token_required
+    @api_token_required
     def post(self):
         data = request.json
         if any(key not in data for key in ['aw_recipient']):
@@ -34,7 +34,7 @@ class MessageListResource(Resource):
 class MessageResource(Resource):
     """Docstring"""
 
-    @token_required
+    @api_token_required
     def get(self, message_id):
         message = db.session.query(Message).filter(
             Message.recipient_user_id == session['user']['id']
@@ -47,7 +47,7 @@ class MessageResource(Resource):
         del data['aw_recipient']
         return data
 
-    @token_required
+    @api_token_required
     def delete(self, message_id):
         message = db.session.query(Message).filter(
             Message.recipient_user_id == session['user']['id']
