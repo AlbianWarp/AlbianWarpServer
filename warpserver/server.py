@@ -30,6 +30,7 @@ app.register_blueprint(client_downloads_page_blueprint)
 app.register_blueprint(game_modifications_downloads_page_blueprint)
 app.register_blueprint(admin_page_blueprint)
 
+
 @app.route("/who_is_online")
 def who_is_online():
     refresh_ws_list()
