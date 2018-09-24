@@ -10,9 +10,8 @@
             <a href="/admin">Admin Dashboard</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="/admin/user">Manage User</a>
+            Manage User
         </li>
-        <li class="breadcrumb-item active">Overview</li>
     </ol>
     <hr>
 </div>
@@ -50,7 +49,7 @@
             <td>{{ user.username }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.power }}</td>
-            <td><a title="Edit / Details" href="#"><i class="fas fa-fw fa-edit"></i></a>|<i title="Lock/Unlock (Not jet implemented)" class="text-gray fas fa-fw fa-lock "></i>|<a title="Delete" class="text-danger btnDelete" href=""><i class="fas fa-fw fa-trash"></i></a></td>
+            <td><a title="Edit / Details" href="/admin/user/{{ user.id }}"><i class="fas fa-fw fa-edit"></i></a>|<i title="Lock/Unlock (Not yet implemented)" class="text-gray fas fa-fw fa-lock "></i>|<a title="Delete" class="text-danger btnDelete" href=""><i class="fas fa-fw fa-trash"></i></a></td>
         </tr>
         {% endfor %}
         </tbody>
@@ -82,6 +81,7 @@
 </div>
 
 <script type="text/javascript">
+
 $('a.btnDelete').on('click', function (e) {
     e.preventDefault();
     var id = $(this).closest('tr').data('id');
