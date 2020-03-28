@@ -23,6 +23,7 @@ services:
       - warpserver_data:/data
     ports:
       - "5000:5000"
+      - "1337:1337"
     environment:
       AW_SQLALCHEMY_DATABASE_URI: mysql://albianwarp:I6K2PG7p45zgZG687@database:3306/db_albianwarp
 
