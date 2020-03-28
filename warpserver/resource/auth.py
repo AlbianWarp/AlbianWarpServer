@@ -33,6 +33,8 @@ class AuthResource(Resource):
         if any(key not in data for key in ['username', 'password']):
             return {"message": "bad request"}, 400
         user = db.session.query(User).filter(User.username == data['username']).first()
+        if not user.username == data['username']:
+            return {"message": "username is case sensitive!"}, 401
         if not user or not user.check_password(data['password']):
             return {"message": "username or password false"}, 401
         logger.info("user %s token generated" % data['username'])
