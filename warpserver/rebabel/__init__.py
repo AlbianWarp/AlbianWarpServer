@@ -142,9 +142,12 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         + raw_pray
                     )
                     print(f"{self.user_id}> PRAY, done")
-                    requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
-                        reply
-                    )
+                    try:
+                        requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
+                            reply
+                        )
+                    except Exception as e:
+                        print(f"PRAY, Could not send data to recipient. {user_id}, {e}")
 
         del requests[self.user_id]
         print(f" removed {self.user_id} from requests")
