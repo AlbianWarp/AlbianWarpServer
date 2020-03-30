@@ -22,4 +22,4 @@ VOLUME "/data/"
 EXPOSE 5000:5000
 EXPOSE 1337:1337
 ENTRYPOINT ["python"]
-CMD ["run.py"]
+CMD [ "-u", "run.py"]

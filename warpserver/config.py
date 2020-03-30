@@ -4,8 +4,12 @@ import string
 import os
 
 # FLASK CONFIGURATION
-HOST = os.getenv('AW_HOST', '127.0.0.1')
+HOST = os.getenv('AW_HOST', '0.0.0.0')
 PORT = int(os.getenv('AW_PORT', '5000'))
+REBABEL_PORT = int(os.getenv('AW_REBABEL_PORT', '1337'))
+REBABEL_HOST = os.getenv('AW_REBABEL_HOST', '0.0.0.0')
+REBABEL_CONFIG_HOST = os.getenv('AW_REBABEL_CONFIG_HOST', 'gameserver.albianwarp.com')
+REBABEL_SERVER_NAME = os.getenv('AW_REBABEL_NAME', 'ThunderStorm')
 SECRET_KEY = os.getenv(
     'AW_SECRET_KEY',
     ''.join([random.choice(string.ascii_letters + string.digits) for n in range(32)])
@@ -13,6 +17,7 @@ SECRET_KEY = os.getenv(
 
 # SQLALCHEMY CONFIGURATION
 SQLALCHEMY_DATABASE_URI = os.getenv('AW_SQLALCHEMY_DATABASE_URI', 'sqlite:///database.sqlite')
+
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # UPLOAD CONFIGURATION

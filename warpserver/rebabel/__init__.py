@@ -5,12 +5,13 @@ from threading import Thread
 
 from warpserver.model import User
 from warpserver.model.base import db
+from warpserver.config import REBABEL_PORT, REBABEL_CONFIG_HOST, REBABEL_HOST ,REBABEL_SERVER_NAME
 
 # Config
 
 echo_load = "40524b28eb000000"
 
-server_ehlo = {"host": "gameserver.albianwarp.com", "port": 1337, "name": "ThunderStorm"}
+server_ehlo = {"host": REBABEL_CONFIG_HOST, "port": REBABEL_PORT, "name": REBABEL_SERVER_NAME}
 
 requests = {}
 threads = {}
@@ -40,7 +41,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         threads[self.user_id] = threading.current_thread()
         while self.session_run:
             try:
-                data = self.request.recv(102400)
+                data = self.request.recv(1024)
             except ConnectionResetError as exception:
                 print(f"{self.user_id} BREAK, {exception}")
                 break
@@ -102,39 +103,154 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     f"{self.user_id}> CREA HIST, Acknowledged a Creatures History package."
                 )
             elif data[0:4] == bytes.fromhex("09000000"):  # PRAY Data
+                pray_data_corrupted = False
                 raw_pray = data[76:]
                 pld_len = int.from_bytes(data[24:28], byteorder="little")
                 print(f"{self.user_id}> PRAY, incoming data, pld_len: {pld_len}")
                 assembly_required = True
                 if pld_len == len(data[32:]) - 8:
-                    print(f"{self.user_id}>PRAY, no assembly required.")
+                    print(f"{self.user_id}> PRAY, no assembly required.")
                     assembly_required = False
                 else:
-                    print(f"{self.user_id}>PRAY, assembling chunks...")
+                    print(f"{self.user_id}> PRAY, assembling chunks...")
                 while assembly_required:
                     payr_data_chunk = self.request.recv(1024)
                     if not payr_data_chunk:
-                        print(f"{self.user_id}>ERROR: PRAY CONN BROKE!!!!")
+                        print(f"{self.user_id}> ERROR: PRAY CONN BROKE!!!!")
                         assembly_required = False
                     raw_pray = raw_pray + payr_data_chunk
                     data = data[:76] + raw_pray
                     if pld_len == len(data[32:]) - 8:
                         assembly_required = False
-                user_id = data[32:36]
-                pld_len = 36 + len(raw_pray)
-                reply = (
-                    bytes.fromhex(
-                        f"090000000000000000000000000000000000000000000000{pld_len.to_bytes(4,byteorder='little').hex()}00000000{pld_len.to_bytes(4,byteorder='little').hex()}0100cccc{self.user_id.to_bytes(4,byteorder='little').hex()}{(pld_len - 24).to_bytes(4, byteorder='little').hex()}00000000010000000c0000000000000000000000"
+                        print(f"{self.user_id}> PRAY, chunks assembled!")
+                    elif pld_len <= len(data[32:]) - 8:
+                        assembly_required = False
+                        pray_data_corrupted = True
+                        print(f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m")
+                        print(f"{self.user_id}> PRAY, dumping it... to carry on!")
+                        print(f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}")
+                        print(f"{self.user_id}> {data.hex()}")
+                        poke_pray(data)
+                if not pray_data_corrupted:
+                    user_id = data[32:36]
+                    pld_len = 36 + len(raw_pray)
+
+                    reply = (
+                        bytes.fromhex(
+                            f"090000000000000000000000000000000000000000000000{pld_len.to_bytes(4,byteorder='little').hex()}00000000{pld_len.to_bytes(4,byteorder='little').hex()}0100cccc{self.user_id.to_bytes(4,byteorder='little').hex()}{(pld_len - 24).to_bytes(4, byteorder='little').hex()}00000000010000000c0000000000000000000000"
+                        )
+                        + raw_pray
                     )
-                    + raw_pray
-                )
-                print(f"{self.user_id}> PRAY, All good :D")
-                requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
-                    reply
-                )
+                    print(f"{self.user_id}> PRAY, done")
+                    requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
+                        reply
+                    )
 
         del requests[self.user_id]
         print(f" removed {self.user_id} from requests")
+
+def poke_pray(pray_request_package, sent_by_server=False):
+    what = {
+        "tcp_pld_len": {"t": "print", "d": len(pray_request_package)},
+        "pld_len_no_header": {"t": "print", "d": len(pray_request_package[32:])},
+        "type": {"t": "raw", "d": pray_request_package[0:4]},
+        "echo_load": {"t": "raw", "d": pray_request_package[4:12]},
+        "user_id_01": {"t": "int", "d": pray_request_package[12:16]},
+        "user_hid": {"t": "int", "d": pray_request_package[16:18]},
+        "mystery_01": {"t": "raw", "d": pray_request_package[18:20]},
+        "mystery_02": {"t": "raw", "d": pray_request_package[20:24]},
+        "pld_len_01": {
+            "t": "int",
+            "d": pray_request_package[24:28],
+        },  # Always pld_len_no_header - 8
+        "mystery_03": {
+            "t": "raw",
+            "d": pray_request_package[28:32],
+        },  # The Payload len might occupy 8 Bytes ?
+        # HEADER END
+        "sender_uid": {"t": "int", "d": pray_request_package[32:36]},
+        "sender_hid": {"t": "int", "d": pray_request_package[36:38]},
+        "mystery_04": {"t": "raw", "d": pray_request_package[38:40]},
+        "pld_len_02": {"t": "int", "d": pray_request_package[40:44]},
+        "mystery_12": {"t": "int", "d": pray_request_package[44:48]},
+        "user_id_02": {"t": "int", "d": pray_request_package[48:52]},
+        "pld_len_minus_24_?": {
+            "t": "int",
+            "d": pray_request_package[52:56],
+        },  # SOme Length :shrug:
+        "mystery_07": {"t": "raw", "d": pray_request_package[56:60]},
+        "mystery_08": {"t": "raw", "d": pray_request_package[60:64]},
+        "mystery_09": {"t": "raw", "d": pray_request_package[64:68]},
+        "mystery_10": {"t": "raw", "d": pray_request_package[68:72]},
+        "mystery_11": {"t": "raw", "d": pray_request_package[72:76]},
+        "pray": {"t": "raw", "d": pray_request_package[76:]},
+        "pray_filename": {
+            "t": "str",
+            "d": pray_request_package[76 : 76 + 128]
+            .decode("latin-1")
+            .rstrip("\0")
+            .encode("latin-1"),
+        },
+    }
+    if sent_by_server:
+        what = {
+            "tcp_pld_len": {"t": "print", "d": len(pray_request_package)},
+            "pld_len_no_header": {"t": "print", "d": len(pray_request_package[32:])},
+            "type": {"t": "raw", "d": pray_request_package[0:4]},
+            "echo_load": {"t": "raw", "d": pray_request_package[4:12]},
+            "user_id_01": {"t": "int", "d": pray_request_package[12:16]},
+            "user_hid": {"t": "int", "d": pray_request_package[16:18]},
+            "mystery_01": {"t": "raw", "d": pray_request_package[18:20]},
+            "mystery_02": {"t": "raw", "d": pray_request_package[20:24]},
+            "pld_len_01": {
+                "t": "int",
+                "d": pray_request_package[24:28],
+            },  # Always pld_len_no_header - 8
+            "mystery_03": {
+                "t": "raw",
+                "d": pray_request_package[28:32],
+            },  # The Payload len might occupy 8 Bytes ?
+            # HEADER END
+            "pld_len": {"t": "int", "d": pray_request_package[32:36]},
+            "mystery_04": {"t": "raw", "d": pray_request_package[36:40]},
+            "mystery_12": {"t": "int", "d": pray_request_package[40:44]},
+            "pld_len_minus_24_?": {"t": "int", "d": pray_request_package[44:48]},
+            "mystery_10": {"t": "int", "d": pray_request_package[48:52]},
+            "mystery_06": {
+                "t": "int",
+                "d": pray_request_package[52:56],
+            },  # SOme Length :shrug:
+            "mystery_07": {"t": "raw", "d": pray_request_package[56:60]},
+            "mystery_08": {"t": "raw", "d": pray_request_package[60:64]},
+            "mystery_09": {"t": "raw", "d": pray_request_package[64:68]},
+            "pray": {"t": "raw", "d": pray_request_package[68:]},
+            "pray_filename": {
+                "t": "str",
+                "d": pray_request_package[68 : 68 + 128]
+                .decode("latin-1")
+                .rstrip("\0")
+                .encode("latin-1"),
+            },
+        }
+    for key, value in what.items():
+        if value["t"] == "int":
+            print(
+                f"i {key}: {int.from_bytes(value['d'], byteorder='little')} - {value['d'].hex()}"
+            )
+        elif value["t"] == "raw":
+            if len(value["d"]) > 9:
+                print(f"r {key}: {value['d'][:8].hex()}... {len(value['d'])}")
+            else:
+                print(f"r {key}: {value['d'].hex()} {len(value['d'])}")
+        elif value["t"] == "str":
+            print(f"s {key}: '{value['d'].decode('latin-1')}' - {value['d'].hex()}")
+        else:
+            print(f"e {key}: {value['d']}")
+    with open(
+        f"./poke_pray/{what['pray_filename']['d'].decode('latin-1')}.pray", "wb"
+    ) as f:
+        f.write(what["pray"]["d"])
+    return what
 
 
 def net_line_reply_package(line_request_package):
@@ -146,6 +262,7 @@ def net_line_reply_package(line_request_package):
         52 + username_len : 52 + username_len + password_len - 1
     ].decode("latin-1")
     user = db.session.query(User).filter(User.username == username).first()
+    db.session.close()
     if not user or not user.check_password(password):
         print("message: username or password incorrect")
         return (
@@ -240,6 +357,7 @@ def net_unik_reply_package(unik_request_package):
     user_hid = int.from_bytes(unik_request_package[16:18], byteorder="little")
     username = None
     user = db.session.query(User).filter(User.id == user_id).first()
+    db.session.close()
     if user:
         username = user.username
         username_hex = username.encode("latin-1").hex()
@@ -264,11 +382,13 @@ def net_unik_reply_package(unik_request_package):
 def user_status_package(user_id, user_hid=1):
     username = "NONE"
     user = db.session.query(User).filter(User.id == user_id).first()
-    if user_id != 0 and not user:
+    db.session.close()
+    if user_id == 0 or not user:
         payld_len = 34 + len(username)
-        print(
-            f"ERROR - user_status_package: A User that is not in the database was requested!"
-        )
+        if not user:
+            print(
+                f"ERROR - user_status_package: A User that is not in the database was requested!"
+            )
         return (
             bytes.fromhex(
                 f"0e0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}0a0000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
@@ -300,7 +420,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 # Port 0 means to select an arbitrary unused port
-HOST, PORT = "0.0.0.0", 1337
+HOST, PORT = REBABEL_HOST, REBABEL_PORT
 BUFSIZ = 1024
 ThreadedTCPServer.allow_reuse_address = True
 server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
