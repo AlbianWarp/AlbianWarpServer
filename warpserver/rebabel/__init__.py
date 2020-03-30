@@ -39,12 +39,19 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             return
         requests[self.user_id] = self
         threads[self.user_id] = threading.current_thread()
+        excess_data = None
         while self.session_run:
-            try:
-                data = self.request.recv(1024)
-            except ConnectionResetError as exception:
-                print(f"{self.user_id} BREAK, {exception}")
-                break
+            if excess_data:
+                print(f"Oh boy! found some excess Data, handling that instead of a `self.request.recv(1024)`")
+                data = excess_data
+                excess_data = None
+                print(f"{self.user_id}> DATA {len(data)} : {data.hex()}")
+            else:
+                try:
+                    data = self.request.recv(1024)
+                except ConnectionResetError as exception:
+                    print(f"{self.user_id} BREAK, {exception}")
+                    break
             if not data:
                 print(f"{self.user_id} BREAK, NODATA")
                 break
@@ -66,6 +73,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     f"{self.user_id}> NET: ULIN, User Online status request for UserID {ulin_user_id}, user online status: {ulin_online_status}."
                 )
                 self.request.sendall(reply)
+                if len(data) > 32:
+                    excess_data = data[32:]
             elif data[0:4] == bytes.fromhex("18000000"):  # NET: STAT
                 reply = net_stat_reply_package(data)
                 print(f"{self.user_id}> NET: STAT, Request.")
@@ -97,6 +106,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     f"{self.user_id}> USER_STATUS, Requested User online status of UserID: {user_id}+{user_hid}:  user online status: {user_status_online_status}."
                 )
                 self.request.sendall(reply)
+                if len(data) > 32:
+                    excess_data = data[32:]
             elif data[0:4] == bytes.fromhex("21030000"):
                 self.request.sendall(data[0:24] + bytes.fromhex("0000000000000000"))
                 print(
@@ -125,12 +136,13 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         print(f"{self.user_id}> PRAY, chunks assembled!")
                     elif pld_len <= len(data[32:]) - 8:
                         assembly_required = False
-                        pray_data_corrupted = True
+                        pray_data_corrupted = False
                         print(f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m")
-                        print(f"{self.user_id}> PRAY, dumping it... to carry on!")
-                        print(f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}")
-                        print(f"{self.user_id}> {data.hex()}")
-                        poke_pray(data)
+                        print(f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}, Data lenght: {len(data)}")
+                        excess_data = data[(pld_len + 40):]
+                        print(f"{self.user_id}> EXCESS DATA {len(excess_data)} : {excess_data.hex()}")
+                        data = data[:(pld_len + 40)]
+                        print(f" DATA {len(data)} . {data[:40].hex()}...")
                 if not pray_data_corrupted:
                     user_id = data[32:36]
                     pld_len = 36 + len(raw_pray)
@@ -151,109 +163,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
         del requests[self.user_id]
         print(f" removed {self.user_id} from requests")
-
-def poke_pray(pray_request_package, sent_by_server=False):
-    what = {
-        "tcp_pld_len": {"t": "print", "d": len(pray_request_package)},
-        "pld_len_no_header": {"t": "print", "d": len(pray_request_package[32:])},
-        "type": {"t": "raw", "d": pray_request_package[0:4]},
-        "echo_load": {"t": "raw", "d": pray_request_package[4:12]},
-        "user_id_01": {"t": "int", "d": pray_request_package[12:16]},
-        "user_hid": {"t": "int", "d": pray_request_package[16:18]},
-        "mystery_01": {"t": "raw", "d": pray_request_package[18:20]},
-        "mystery_02": {"t": "raw", "d": pray_request_package[20:24]},
-        "pld_len_01": {
-            "t": "int",
-            "d": pray_request_package[24:28],
-        },  # Always pld_len_no_header - 8
-        "mystery_03": {
-            "t": "raw",
-            "d": pray_request_package[28:32],
-        },  # The Payload len might occupy 8 Bytes ?
-        # HEADER END
-        "sender_uid": {"t": "int", "d": pray_request_package[32:36]},
-        "sender_hid": {"t": "int", "d": pray_request_package[36:38]},
-        "mystery_04": {"t": "raw", "d": pray_request_package[38:40]},
-        "pld_len_02": {"t": "int", "d": pray_request_package[40:44]},
-        "mystery_12": {"t": "int", "d": pray_request_package[44:48]},
-        "user_id_02": {"t": "int", "d": pray_request_package[48:52]},
-        "pld_len_minus_24_?": {
-            "t": "int",
-            "d": pray_request_package[52:56],
-        },  # SOme Length :shrug:
-        "mystery_07": {"t": "raw", "d": pray_request_package[56:60]},
-        "mystery_08": {"t": "raw", "d": pray_request_package[60:64]},
-        "mystery_09": {"t": "raw", "d": pray_request_package[64:68]},
-        "mystery_10": {"t": "raw", "d": pray_request_package[68:72]},
-        "mystery_11": {"t": "raw", "d": pray_request_package[72:76]},
-        "pray": {"t": "raw", "d": pray_request_package[76:]},
-        "pray_filename": {
-            "t": "str",
-            "d": pray_request_package[76 : 76 + 128]
-            .decode("latin-1")
-            .rstrip("\0")
-            .encode("latin-1"),
-        },
-    }
-    if sent_by_server:
-        what = {
-            "tcp_pld_len": {"t": "print", "d": len(pray_request_package)},
-            "pld_len_no_header": {"t": "print", "d": len(pray_request_package[32:])},
-            "type": {"t": "raw", "d": pray_request_package[0:4]},
-            "echo_load": {"t": "raw", "d": pray_request_package[4:12]},
-            "user_id_01": {"t": "int", "d": pray_request_package[12:16]},
-            "user_hid": {"t": "int", "d": pray_request_package[16:18]},
-            "mystery_01": {"t": "raw", "d": pray_request_package[18:20]},
-            "mystery_02": {"t": "raw", "d": pray_request_package[20:24]},
-            "pld_len_01": {
-                "t": "int",
-                "d": pray_request_package[24:28],
-            },  # Always pld_len_no_header - 8
-            "mystery_03": {
-                "t": "raw",
-                "d": pray_request_package[28:32],
-            },  # The Payload len might occupy 8 Bytes ?
-            # HEADER END
-            "pld_len": {"t": "int", "d": pray_request_package[32:36]},
-            "mystery_04": {"t": "raw", "d": pray_request_package[36:40]},
-            "mystery_12": {"t": "int", "d": pray_request_package[40:44]},
-            "pld_len_minus_24_?": {"t": "int", "d": pray_request_package[44:48]},
-            "mystery_10": {"t": "int", "d": pray_request_package[48:52]},
-            "mystery_06": {
-                "t": "int",
-                "d": pray_request_package[52:56],
-            },  # SOme Length :shrug:
-            "mystery_07": {"t": "raw", "d": pray_request_package[56:60]},
-            "mystery_08": {"t": "raw", "d": pray_request_package[60:64]},
-            "mystery_09": {"t": "raw", "d": pray_request_package[64:68]},
-            "pray": {"t": "raw", "d": pray_request_package[68:]},
-            "pray_filename": {
-                "t": "str",
-                "d": pray_request_package[68 : 68 + 128]
-                .decode("latin-1")
-                .rstrip("\0")
-                .encode("latin-1"),
-            },
-        }
-    for key, value in what.items():
-        if value["t"] == "int":
-            print(
-                f"i {key}: {int.from_bytes(value['d'], byteorder='little')} - {value['d'].hex()}"
-            )
-        elif value["t"] == "raw":
-            if len(value["d"]) > 9:
-                print(f"r {key}: {value['d'][:8].hex()}... {len(value['d'])}")
-            else:
-                print(f"r {key}: {value['d'].hex()} {len(value['d'])}")
-        elif value["t"] == "str":
-            print(f"s {key}: '{value['d'].decode('latin-1')}' - {value['d'].hex()}")
-        else:
-            print(f"e {key}: {value['d']}")
-    with open(
-        f"./poke_pray/{what['pray_filename']['d'].decode('latin-1')}.pray", "wb"
-    ) as f:
-        f.write(what["pray"]["d"])
-    return what
 
 
 def net_line_reply_package(line_request_package):
