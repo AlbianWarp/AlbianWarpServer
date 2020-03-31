@@ -167,6 +167,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         # todo: So what now... the recipient user is not online, shall we just throw away the PRAY ?
                     except timeout as e:
                         print(f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} did not respond in Time!")
+                        raise e
                     except Exception as e:
                         print(f"{self.user_id}> PRAY, ERROR! Could not send data to recipient. {int.from_bytes(user_id, byteorder='little')}, {str(e)} {type(e)}")
                         raise e
