@@ -2,6 +2,7 @@ import random
 import socketserver
 import threading
 from threading import Thread
+from socket import SHUT_RDWR, timeout
 
 from warpserver.model import User
 from warpserver.model.base import db
@@ -16,6 +17,8 @@ server_ehlo = {"host": REBABEL_CONFIG_HOST, "port": REBABEL_PORT, "name": REBABE
 requests = {}
 threads = {}
 
+BUFSIZ = 1024
+
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     """
@@ -24,9 +27,9 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     """
-
     def handle(self):
-        data = self.request.recv(1024)
+        print(f"{self.request.gettimeout()}")
+        data = self.request.recv(BUFSIZ)
         if data[0:4] == bytes.fromhex("25000000"):
             reply, self.user_id = net_line_reply_package(data)
             self.request.sendall(reply)
@@ -48,7 +51,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 print(f"{self.user_id}> DATA {len(data)} : {data.hex()}")
             else:
                 try:
-                    data = self.request.recv(1024)
+                    data = self.request.recv(BUFSIZ)
                 except ConnectionResetError as exception:
                     print(f"{self.user_id} BREAK, {exception}")
                     break
@@ -125,7 +128,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     print(f"{self.user_id}> PRAY, assembling chunks...")
                 while assembly_required:
-                    payr_data_chunk = self.request.recv(1024)
+                    payr_data_chunk = self.request.recv(BUFSIZ)
                     if not payr_data_chunk:
                         print(f"{self.user_id}> ERROR: PRAY CONN BROKE!!!!")
                         assembly_required = False
@@ -136,13 +139,12 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         print(f"{self.user_id}> PRAY, chunks assembled!")
                     elif pld_len <= len(data[32:]) - 8:
                         assembly_required = False
-                        pray_data_corrupted = False
+                        pray_data_corrupted = False # todo: We might actually want to check this. Which could be done via the "prayer" library.
                         print(f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m")
                         print(f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}, Data lenght: {len(data)}")
                         excess_data = data[(pld_len + 40):]
                         print(f"{self.user_id}> EXCESS DATA {len(excess_data)} : {excess_data.hex()}")
                         data = data[:(pld_len + 40)]
-                        print(f" DATA {len(data)} . {data[:40].hex()}...")
                 if not pray_data_corrupted:
                     user_id = data[32:36]
                     pld_len = 36 + len(raw_pray)
@@ -155,14 +157,25 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                     )
                     print(f"{self.user_id}> PRAY, done")
                     try:
+                        requests[int.from_bytes(user_id, byteorder="little")].request.settimeout(10)
                         requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
                             reply
                         )
+                        requests[int.from_bytes(user_id, byteorder="little")].request.settimeout(None)
+                    except KeyError as e:
+                        print(f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} is not online!")
+                        # todo: So what now... the recipient user is not online, shall we just throw away the PRAY ?
+                    except timeout as e:
+                        print(f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} did not respond in Time!")
                     except Exception as e:
-                        print(f"PRAY, Could not send data to recipient. {user_id}, {e}")
-
-        del requests[self.user_id]
+                        print(f"{self.user_id}> PRAY, ERROR! Could not send data to recipient. {int.from_bytes(user_id, byteorder='little')}, {str(e)} {type(e)}")
+                        raise e
+        requests.pop(self.user_id, None)
         print(f" removed {self.user_id} from requests")
+
+    def finish(self):
+        requests.pop(self.user_id, None)
+        print(f"FINISH! removed {self.user_id} from requests")
 
 
 def net_line_reply_package(line_request_package):
@@ -331,62 +344,11 @@ def user_status_package(user_id, user_hid=1):
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
-# Port 0 means to select an arbitrary unused port
-HOST, PORT = REBABEL_HOST, REBABEL_PORT
-BUFSIZ = 1024
+
 ThreadedTCPServer.allow_reuse_address = True
-server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
+server = ThreadedTCPServer((REBABEL_HOST, REBABEL_PORT), ThreadedTCPRequestHandler)
 ip, port = server.server_address
 
 # Start a thread with the server -- that thread will then start one
 # more thread for each request
 server_thread = Thread(target=server.serve_forever)
-
-
-# if __name__ == "__main__":
-#     # Port 0 means to select an arbitrary unused port
-#     HOST, PORT = "0.0.0.0", 1337
-#     BUFSIZ = 1024
-#     ThreadedTCPServer.allow_reuse_address = True
-#     server = ThreadedTCPServer(("HOST", PORT), ThreadedTCPRequestHandler)
-#     ip, port = server.server_address
-
-#     # Start a thread with the server -- that thread will then start one
-#     # more thread for each request
-#     server_thread = Thread(target=server.serve_forever)
-#     # Exit the server thread when the main thread terminates
-#     # server_thread.daemon = True
-#     server_thread.start()
-#     print("Server loop running in thread:", server_thread.name)
-#     print("IP: {} Port: {}".format(str(ip), str(port)))
-#     print("Waiting for connection...")
-#     try:
-#         while True:
-#             comand = input("#")
-#             if comand == "ls":
-#                 print(requests)
-#             elif comand.startswith("send "):
-#                 comand, recipient, data = comand.split(" ")
-#                 requests[int(recipient)].request.sendall(bytes.fromhex(data))
-#             elif comand.startswith("quit"):
-#                 tmp = []
-#                 for foo in requests:
-#                     tmp.append(foo)
-#                 for foo in tmp:
-#                     print(f"{foo} is still connected ")
-#                     requests[foo].request.shutdown(SHUT_RDWR)
-#                     requests[foo].request.close()
-#                 server.shutdown()
-#                 server.server_close()
-#                 break
-
-#     except KeyboardInterrupt as exception:
-#         tmp = []
-#         for foo in requests:
-#             tmp.append(foo)
-#         for foo in tmp:
-#             print(f"{foo} is still connected ")
-#             requests[foo].request.shutdown(SHUT_RDWR)
-#             requests[foo].request.close()
-#         server.shutdown()
-#         server.server_close()
