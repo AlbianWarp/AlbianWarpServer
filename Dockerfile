@@ -2,11 +2,11 @@ FROM python:3-slim
 MAINTAINER KeyboardInterrupt
 
 # Install Requirements
-RUN apt-get update -y && apt-get install -y python3-dev default-libmysqlclient-dev python-pip
+RUN apt-get update -y && apt-get install -y default-libmysqlclient-dev python3-pip python3-wheel
 RUN mkdir -p /data/uploads/creatures /app
 WORKDIR /app
 COPY requirements.txt /app
-RUN pip install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # Environment variables
 ENV AW_HOST 0.0.0.0
@@ -20,5 +20,6 @@ COPY . /app
 # Volumes, Ports & Entrypoint
 VOLUME "/data/"
 EXPOSE 5000:5000
+EXPOSE 1337:1337
 ENTRYPOINT ["python"]
-CMD ["run.py"]
+CMD [ "-u", "run.py"]
