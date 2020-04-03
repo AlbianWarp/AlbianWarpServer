@@ -6,13 +6,22 @@ from socket import SHUT_RDWR, timeout
 
 from warpserver.model import User
 from warpserver.model.base import db
-from warpserver.config import REBABEL_PORT, REBABEL_CONFIG_HOST, REBABEL_HOST ,REBABEL_SERVER_NAME
+from warpserver.config import (
+    REBABEL_PORT,
+    REBABEL_CONFIG_HOST,
+    REBABEL_HOST,
+    REBABEL_SERVER_NAME,
+)
 
 # Config
 
 echo_load = "40524b28eb000000"
 
-server_ehlo = {"host": REBABEL_CONFIG_HOST, "port": REBABEL_PORT, "name": REBABEL_SERVER_NAME}
+server_ehlo = {
+    "host": REBABEL_CONFIG_HOST,
+    "port": REBABEL_PORT,
+    "name": REBABEL_SERVER_NAME,
+}
 
 requests = {}
 threads = {}
@@ -27,11 +36,12 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     """
+
     def handle(self):
         print(f"{self.request.gettimeout()}")
         data = self.request.recv(BUFSIZ)
         if data[0:4] == bytes.fromhex("25000000"):
-            reply, self.user_id = net_line_reply_package(data)
+            reply, self.user_id, self.username = net_line_reply_package(data)
             self.request.sendall(reply)
             if self.user_id is not None:
                 self.session_run = True
@@ -40,12 +50,24 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         else:
             print(f"Whatever that was, It was not a 'NET: LINE' Request! Bye Bye! ;)")
             return
+        for request in requests:
+            requests[request].request.sendall(
+                _user_status_package(
+                    username=self.username,
+                    user_id=self.user_id,
+                    user_hid=1,
+                    online=True,
+                )
+            )
+            print(f"{self.user_id}> Told {request} that I am online now!")
         requests[self.user_id] = self
         threads[self.user_id] = threading.current_thread()
         excess_data = None
         while self.session_run:
             if excess_data:
-                print(f"Oh boy! found some excess Data, handling that instead of a `self.request.recv(1024)`")
+                print(
+                    f"Oh boy! found some excess Data, handling that instead of a `self.request.recv(1024)`"
+                )
                 data = excess_data
                 excess_data = None
                 print(f"{self.user_id}> DATA {len(data)} : {data.hex()}")
@@ -139,43 +161,69 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         print(f"{self.user_id}> PRAY, chunks assembled!")
                     elif pld_len <= len(data[32:]) - 8:
                         assembly_required = False
-                        pray_data_corrupted = False # todo: We might actually want to check this. Which could be done via the "prayer" library.
-                        print(f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m")
-                        print(f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}, Data lenght: {len(data)}")
-                        excess_data = data[(pld_len + 40):]
-                        print(f"{self.user_id}> EXCESS DATA {len(excess_data)} : {excess_data.hex()}")
-                        data = data[:(pld_len + 40)]
+                        pray_data_corrupted = False  # todo: We might actually want to check this. Which could be done via the "prayer" library.
+                        print(
+                            f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m"
+                        )
+                        print(
+                            f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}, Data lenght: {len(data)}"
+                        )
+                        excess_data = data[(pld_len + 40) :]
+                        print(
+                            f"{self.user_id}> EXCESS DATA {len(excess_data)} : {excess_data.hex()}"
+                        )
+                        data = data[: (pld_len + 40)]
                 if not pray_data_corrupted:
                     user_id = data[32:36]
                     pld_len = 36 + len(raw_pray)
 
                     reply = (
                         bytes.fromhex(
-                            f"090000000000000000000000000000000000000000000000{pld_len.to_bytes(4,byteorder='little').hex()}00000000{pld_len.to_bytes(4,byteorder='little').hex()}0100cccc{self.user_id.to_bytes(4,byteorder='little').hex()}{(pld_len - 24).to_bytes(4, byteorder='little').hex()}00000000010000000c0000000000000000000000"
+                            f"090000000000000000000000000000000000000000000000{pld_len.to_bytes(4, byteorder='little').hex()}00000000{pld_len.to_bytes(4, byteorder='little').hex()}0100cccc{self.user_id.to_bytes(4, byteorder='little').hex()}{(pld_len - 24).to_bytes(4, byteorder='little').hex()}00000000010000000c0000000000000000000000"
                         )
                         + raw_pray
                     )
                     print(f"{self.user_id}> PRAY, done")
                     try:
-                        requests[int.from_bytes(user_id, byteorder="little")].request.settimeout(10)
-                        requests[int.from_bytes(user_id, byteorder="little")].request.sendall(
-                            reply
-                        )
-                        requests[int.from_bytes(user_id, byteorder="little")].request.settimeout(None)
+                        requests[
+                            int.from_bytes(user_id, byteorder="little")
+                        ].request.settimeout(10)
+                        requests[
+                            int.from_bytes(user_id, byteorder="little")
+                        ].request.sendall(reply)
+                        requests[
+                            int.from_bytes(user_id, byteorder="little")
+                        ].request.settimeout(None)
                     except KeyError as e:
-                        print(f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} is not online!")
+                        print(
+                            f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} is not online!"
+                        )
                         # todo: So what now... the recipient user is not online, shall we just throw away the PRAY ?
                     except timeout as e:
-                        print(f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} did not respond in Time!")
+                        print(
+                            f"{self.user_id}> PRAY, ERROR! The Recipient user with ID {int.from_bytes(user_id, byteorder='little')} did not respond in Time!"
+                        )
                         raise e
                     except Exception as e:
-                        print(f"{self.user_id}> PRAY, ERROR! Could not send data to recipient. {int.from_bytes(user_id, byteorder='little')}, {str(e)} {type(e)}")
+                        print(
+                            f"{self.user_id}> PRAY, ERROR! Could not send data to recipient. {int.from_bytes(user_id, byteorder='little')}, {str(e)} {type(e)}"
+                        )
                         raise e
         requests.pop(self.user_id, None)
         print(f" removed {self.user_id} from requests")
 
     def finish(self):
         requests.pop(self.user_id, None)
+        for request in requests:
+            requests[request].request.sendall(
+                _user_status_package(
+                    username=self.username,
+                    user_id=self.user_id,
+                    user_hid=1,
+                    online=False,
+                )
+            )
+            print(f"{self.user_id}> Told {request} that I am offline now!")
         print(f"FINISH! removed {self.user_id} from requests")
 
 
@@ -201,7 +249,7 @@ def net_line_reply_package(line_request_package):
     print(f"{username} has joined!")
     return (
         bytes.fromhex(
-            f"0a000000{echo_load}{user.id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2,byteorder='little').hex()}0a00{package_count.to_bytes(4, byteorder='little').hex()}0000000000000000"
+            f"0a000000{echo_load}{user.id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}0a00{package_count.to_bytes(4, byteorder='little').hex()}0000000000000000"
             + f"00000000"
             + f"01000000"
             + f"00000000"
@@ -219,6 +267,7 @@ def net_line_reply_package(line_request_package):
             + f"00"
         ),
         user.id,
+        user.username,
     )
 
 
@@ -269,7 +318,7 @@ def net_ruso_reply_package(ruso_request_package):
     random_user_hid = 1
     return (
         bytes.fromhex(
-            f"21020000{echo_load}{random_user_id.to_bytes(4, byteorder='little').hex()}{random_user_hid.to_bytes(2,byteorder='little').hex()}0a00{package_count_hex}0000000001000000"
+            f"21020000{echo_load}{random_user_id.to_bytes(4, byteorder='little').hex()}{random_user_hid.to_bytes(2, byteorder='little').hex()}0a00{package_count_hex}0000000001000000"
         ),
         random_user_id,
         random_user_hid,
@@ -316,8 +365,8 @@ def user_status_package(user_id, user_hid=1):
                 f"ERROR - user_status_package: A User that is not in the database was requested!"
             )
         return (
-            bytes.fromhex(
-                f"0e0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}0a0000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
+            _user_status_package(
+                username=username, user_id=user_id, user_hid=user_hid, online=False
             ),
             False,
         )
@@ -325,21 +374,33 @@ def user_status_package(user_id, user_hid=1):
     payld_len = 34 + len(username)
     if user_id in requests or user_id == 0:
         reply, online_status = (
-            bytes.fromhex(
-                f"0d0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2,byteorder='little').hex()}000000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2,byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
+            _user_status_package(
+                username=username, user_id=user_id, user_hid=user_hid, online=True
             ),
             True,
         )
         print(f"{user_id}+{user_hid} is online")
     else:
         reply, online_status = (
-            bytes.fromhex(
-                f"0e0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2,byteorder='little').hex()}0a0000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2,byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
+            _user_status_package(
+                username=username, user_id=user_id, user_hid=user_hid, online=False
             ),
             False,
         )
         print(f"{user_id}+{user_hid} is offline")
     return reply, online_status
+
+
+def _user_status_package(username, user_id, user_hid=1, online=True):
+    payld_len = 34 + len(username)
+    if online:
+        return bytes.fromhex(
+            f"0d0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}000000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
+        )
+    else:
+        return bytes.fromhex(
+            f"0e0000000000000000000000{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}0a0000000000{payld_len.to_bytes(4, byteorder='little').hex()}00000000{payld_len.to_bytes(4, byteorder='little').hex()}{user_id.to_bytes(4, byteorder='little').hex()}{user_hid.to_bytes(2, byteorder='little').hex()}cccc0500000005000000{len(username).to_bytes(4, byteorder='little').hex()}48617070794d65696c69{username.encode('latin-1').hex()}"
+        )
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
