@@ -8,6 +8,7 @@ services:
     restart: always
     ports:
       - "3306:3306"
+    command: --wait_timeout=57600
     environment:
       MYSQL_ROOT_PASSWORD: U7TFo2utv7OU3V556
       MYSQL_DATABASE: db_albianwarp
