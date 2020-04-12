@@ -150,16 +150,16 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 else:
                     print(f"{self.user_id}> PRAY, assembling chunks...")
                 while assembly_required:
-                    payr_data_chunk = self.request.recv(BUFSIZ)
-                    if not payr_data_chunk:
+                    pray_data_chunk = self.request.recv(BUFSIZ)
+                    if not pray_data_chunk:
                         print(f"{self.user_id}> ERROR: PRAY CONN BROKE!!!!")
                         assembly_required = False
-                    raw_pray = raw_pray + payr_data_chunk
+                    raw_pray = raw_pray + pray_data_chunk
                     data = data[:76] + raw_pray
                     if pld_len == len(data[32:]) - 8:
                         assembly_required = False
                         print(f"{self.user_id}> PRAY, chunks assembled!")
-                    elif pld_len <= len(data[32:]) - 8:
+                    elif len(data[32:]) - 8 > pld_len:
                         assembly_required = False
                         pray_data_corrupted = False  # todo: We might actually want to check this. Which could be done via the "prayer" library.
                         print(
