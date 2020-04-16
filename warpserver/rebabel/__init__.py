@@ -165,7 +165,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         print(f"{self.user_id}> PRAY, chunks assembled!")
                     elif len(data[32:]) - 8 > pld_len:
                         assembly_required = False
-                        fixed_pray_file_data = bytes("PRAY", encoding="latin-1")
                         print(
                             f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m"
                         )
