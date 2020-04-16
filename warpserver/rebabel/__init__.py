@@ -167,7 +167,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         assembly_required = False
                         fixed_pray_file_data = bytes("PRAY", encoding="latin-1")
                         print(
-                            f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[91m"
+                            f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m"
                         )
                         print(
                             f"{self.user_id}> PRAY, expected length: {pld_len} actual length {len(data[32:]) - 8}, Data lenght: {len(data)}"
