@@ -9,4 +9,4 @@ uuid
 gevent
 mysqlclient
 requests
-prayer
+prayer==0.1.1
