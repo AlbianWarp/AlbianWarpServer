@@ -1,3 +1,4 @@
+import uuid
 import random
 import socketserver
 import threading
@@ -12,6 +13,9 @@ from warpserver.config import (
     REBABEL_HOST,
     REBABEL_SERVER_NAME,
 )
+
+from prayer.prayer import Pray
+from prayer.blocks import TagBlock
 
 # Config
 
@@ -161,7 +165,6 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         print(f"{self.user_id}> PRAY, chunks assembled!")
                     elif len(data[32:]) - 8 > pld_len:
                         assembly_required = False
-                        pray_data_corrupted = False  # todo: We might actually want to check this. Which could be done via the "prayer" library.
                         print(
                             f"{self.user_id}> PRAY, \033[91mWHOOPS, Got to much data there!\033[00m"
                         )
@@ -173,6 +176,34 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                             f"{self.user_id}> EXCESS DATA {len(excess_data)} : {excess_data.hex()}"
                         )
                         data = data[: (pld_len + 40)]
+                pray = Pray(raw_pray)
+                filename = str(uuid.uuid1())
+                fixed_pray_file_data = bytes("PRAY", encoding="latin-1")
+                for block in pray.blocks:
+                    print(block.type)
+                    if block.type not in ['REQU', 'CHAT', 'MESG', 'CREA', 'GENE', 'GLST', 'PHOT', 'warp']:
+                        print(f"{self.user_id}> \033[91mPRAY Found a weird block.type! '{block.type}'\033[00m")
+                        pray_data_corrupted = True
+                        print(block.block_data.hex())
+                    else:
+                        if block.type == "warp":
+                            filename = block.name
+                            if block.type == "warp":
+                                tag_block = TagBlock(block.block_data)
+                                for variable in tag_block.named_variables:
+                                    if type(variable[1]) == int:
+                                        print('\tINT Key: "%s" Value: %s' % variable)
+                                    elif type(variable[1]) == str:
+                                        print('\tSTR Key: "%s" Value: "%s"' % variable)
+                        print("Block Type: %s\nBlock Name: %s" % (block.type, block.name))
+                        fixed_pray_file_data += block.block_data
+                if pray_data_corrupted:
+                    with open(f"./data/{filename}", 'wb') as f:
+                        f.write(fixed_pray_file_data)
+                    with open(f"./data/{filename}.data", 'wb') as f:
+                        f.write(data)
+                    with open(f"./data/{filename}.raw", 'wb') as f:
+                        f.write(raw_pray)
                 if not pray_data_corrupted:
                     user_id = data[32:36]
                     pld_len = 36 + len(raw_pray)
