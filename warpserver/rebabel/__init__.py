@@ -181,7 +181,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 fixed_pray_file_data = bytes("PRAY", encoding="latin-1")
                 for block in pray.blocks:
                     print(block.type)
-                    if block.type not in ['CREA', 'GENE', 'GLST', 'PHOT', 'warp']:
+                    if block.type not in ['REQU', 'CHAT', 'MESG', 'CREA', 'GENE', 'GLST', 'PHOT', 'warp']:
                         print(f"{self.user_id}> \033[91mPRAY Found a weird block.type! '{block.type}'\033[91m")
                         pray_data_corrupted = True
                         print(block.block_data.hex())
