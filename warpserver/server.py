@@ -9,11 +9,21 @@ from warpserver.model import User
 
 from warpserver.model.base import db
 
-logger = logging.getLogger('albianwarp')
+logger = logging.getLogger("albianwarp")
 logger.setLevel(logging.DEBUG)
 
 from warpserver.sockets import ws_list, refresh_ws_list, consumer
-from warpserver.pages import register_page_blueprint, home_page_blueprint, tos_page_blueprint, pp_page_blueprint, client_downloads_page_blueprint, game_modifications_downloads_page_blueprint, login_page_blueprint, admin_page_blueprint, getting_started_page_blueprint
+from warpserver.pages import (
+    register_page_blueprint,
+    home_page_blueprint,
+    tos_page_blueprint,
+    pp_page_blueprint,
+    client_downloads_page_blueprint,
+    game_modifications_downloads_page_blueprint,
+    login_page_blueprint,
+    admin_page_blueprint,
+    getting_started_page_blueprint,
+)
 
 
 app = Flask(__name__)
@@ -50,7 +60,7 @@ def rebabel_who_is_online():
     return jsonify(tmp)
 
 
-@sockets.route('/ws')
+@sockets.route("/ws")
 def echo_socket(ws):
     while not ws.closed:
         message = ws.receive()

@@ -43,18 +43,18 @@ def consumer(message, ws):
     try:
         data = json.loads(message)
         if "auth" in data:
-            user = decode_token(data['auth'])
+            user = decode_token(data["auth"])
             if user:
-                ws_list[user['username']] = ws
+                ws_list[user["username"]] = ws
                 print(user)
                 ws.send(json.dumps({"auth": True}))
             else:
                 ws.send(json.dumps({"auth": False}))
         elif check_auth(ws) and "aw_recipient" in data:
-            recipient = data['aw_recipient']
-            data['aw_sender'] = check_auth(ws)
-            del data['aw_recipient']
-            data['aw_date'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+            recipient = data["aw_recipient"]
+            data["aw_sender"] = check_auth(ws)
+            del data["aw_recipient"]
+            data["aw_date"] = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             send_to_user(recipient, json.dumps(data))
     except json.JSONDecodeError as e:
         print("NOT JSON! %s" % e)

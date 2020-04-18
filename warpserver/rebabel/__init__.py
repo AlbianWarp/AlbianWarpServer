@@ -181,8 +181,19 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                 fixed_pray_file_data = bytes("PRAY", encoding="latin-1")
                 for block in pray.blocks:
                     print(block.type)
-                    if block.type not in ['REQU', 'CHAT', 'MESG', 'CREA', 'GENE', 'GLST', 'PHOT', 'warp']:
-                        print(f"{self.user_id}> \033[91mPRAY Found a weird block.type! '{block.type}'\033[00m")
+                    if block.type not in [
+                        "REQU",
+                        "CHAT",
+                        "MESG",
+                        "CREA",
+                        "GENE",
+                        "GLST",
+                        "PHOT",
+                        "warp",
+                    ]:
+                        print(
+                            f"{self.user_id}> \033[91mPRAY Found a weird block.type! '{block.type}'\033[00m"
+                        )
                         pray_data_corrupted = True
                         print(block.block_data.hex())
                     else:
@@ -195,14 +206,16 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                                         print('\tINT Key: "%s" Value: %s' % variable)
                                     elif type(variable[1]) == str:
                                         print('\tSTR Key: "%s" Value: "%s"' % variable)
-                        print("Block Type: %s\nBlock Name: %s" % (block.type, block.name))
+                        print(
+                            "Block Type: %s\nBlock Name: %s" % (block.type, block.name)
+                        )
                         fixed_pray_file_data += block.block_data
                 if pray_data_corrupted:
-                    with open(f"./data/{filename}", 'wb') as f:
+                    with open(f"./data/{filename}", "wb") as f:
                         f.write(fixed_pray_file_data)
-                    with open(f"./data/{filename}.data", 'wb') as f:
+                    with open(f"./data/{filename}.data", "wb") as f:
                         f.write(data)
-                    with open(f"./data/{filename}.raw", 'wb') as f:
+                    with open(f"./data/{filename}.raw", "wb") as f:
                         f.write(raw_pray)
                 if not pray_data_corrupted:
                     user_id = data[32:36]
