@@ -1,7 +1,7 @@
 {% macro render_navigation(pages, current_page) %}
 <ul class="navbar-nav ml-auto">
-    <li class="nav-item {% if current_page == "Client Downloads" %}active{% endif %}"><a class="nav-link" href="/client_downloads">Client Downloads</a> </li>
-    {% if not session.logged_in %}
+    <li class="nav-item {% if current_page == "Getting Started" %}active{% endif %}"><a class="nav-link" href="/getting_started">Getting Started</a> </li>
+    {% if not session.logged_in %}<li>_</li>
     <li class="nav-item {% if current_page == "Register" %}active{% endif %}"><a class="nav-link" href="/register">register</a> </li>
     <li class="nav-item {% if current_page == "Login" %}active{% endif %}"><a class="nav-link" href="/login">login</a> </li>
     {% else %}

@@ -3,7 +3,7 @@ import random
 import socketserver
 import threading
 from threading import Thread
-from socket import SHUT_RDWR, timeout
+from socket import timeout
 
 from warpserver.model import User
 from warpserver.model.base import db
