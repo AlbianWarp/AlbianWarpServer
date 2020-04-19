@@ -6,7 +6,7 @@ from .base import db, BaseModel
 class User(BaseModel):
     """Docsting"""
 
-    __tablename__ = 'users'
+    __tablename__ = "users"
     username = db.Column(db.String(18), unique=True)
     password_hash = db.Column(db.String(256))
     email = db.Column(db.String(256))
@@ -27,7 +27,4 @@ class User(BaseModel):
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'username': self.username
-        }
+        return {"id": self.id, "username": self.username}

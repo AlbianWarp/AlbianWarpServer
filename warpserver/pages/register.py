@@ -11,12 +11,11 @@ from wtforms.fields.html5 import EmailField
 from warpserver.model.base import db
 from warpserver.model import User
 
-register_page_blueprint = Blueprint('register', __name__,
-                                    template_folder='templates')
+register_page_blueprint = Blueprint("register", __name__, template_folder="templates")
 
 
 class Unique(object):
-    def __init__(self, model, field, message=u'This element already exists.'):
+    def __init__(self, model, field, message=u"This element already exists."):
         self.model = model
         self.field = field
         self.message = message
@@ -38,52 +37,59 @@ class UsernameCharacterValidator(object):
 
 
 class RegistrationForm(FlaskForm):
-    email = EmailField('Enter email',
-                       validators=[
-                           DataRequired(),
-                           Email()
-                       ])
-    email_confirmation = EmailField('Repeat email',
-                                    validators=[DataRequired(),
-                                                Email(),
-                                                EqualTo('email', message='email must match')
-                                                ])
-    username = StringField('Enter Username',
-                           validators=[
-                               DataRequired(),
-                               Length(min=3, max=18),
-                               Unique(User, User.username, message="User Already exists!"),
-                               UsernameCharacterValidator(
-                                   re_pattern=r'[^a-zA-Z0-9]',
-                                   message=u'Username contains invalid characters Only "a-z, A-Z, 0-9" are allowed'
-                               )
-                           ])
-    password = PasswordField('Enter password',
-                             validators=[
-                                 DataRequired(),
-                                 Length(min=8)
-                             ])
-    password_confirmation = PasswordField('Repeat password',
-                                          validators=[
-                                              DataRequired(),
-                                              Length(min=8),
-                                              EqualTo('password', message='password must match')
-                                          ])
+    email = EmailField("Enter email", validators=[DataRequired(), Email()])
+    email_confirmation = EmailField(
+        "Repeat email",
+        validators=[
+            DataRequired(),
+            Email(),
+            EqualTo("email", message="email must match"),
+        ],
+    )
+    username = StringField(
+        "Enter Username",
+        validators=[
+            DataRequired(),
+            Length(min=3, max=18),
+            Unique(User, User.username, message="User Already exists!"),
+            UsernameCharacterValidator(
+                re_pattern=r"[^a-zA-Z0-9]",
+                message=u'Username contains invalid characters Only "a-z, A-Z, 0-9" are allowed',
+            ),
+        ],
+    )
+    password = PasswordField(
+        "Enter password", validators=[DataRequired(), Length(min=8)]
+    )
+    password_confirmation = PasswordField(
+        "Repeat password",
+        validators=[
+            DataRequired(),
+            Length(min=8),
+            EqualTo("password", message="password must match"),
+        ],
+    )
     accept_legal_stuff = BooleanField(
         'I agree to the <a target="_blank" href="/tos">Terms of Service</a> and <a target="_blank" href="privacy_policy">Privacy Policy</a>!',
-        validators=[DataRequired()])
+        validators=[DataRequired()],
+    )
+
+
 #    age_checkbox = BooleanField('I am atleast 13 years old!', validators=[DataRequired()])
 
 
-@register_page_blueprint.route('/register', methods=['POST', 'GET'])
+@register_page_blueprint.route("/register", methods=["POST", "GET"])
 def register_form():
     form = RegistrationForm()
     message = None
-    if request.method == 'POST':
+    if request.method == "POST":
         if form.validate_on_submit():
-            new_user = User(username=request.form['username'], password=request.form['password'],
-                            email=request.form['email'])
+            new_user = User(
+                username=request.form["username"],
+                password=request.form["password"],
+                email=request.form["email"],
+            )
             db.session.add(new_user)
             db.session.commit()
             message = "User successfully created!"
-    return render_template('register.html', form=form, message=message)
+    return render_template("register.html", form=form, message=message)
