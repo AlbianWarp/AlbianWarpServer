@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% set page_title = 'Getting Started' %}
+
+{% block content %}
+<div class="col-lg-12">
+    <h1>Getting Started</h1>
+    <p>
+        To Get Started With playing Dockingstation online.<br>
+        <b>First</b> you, have to install Dockingstation, It should work with all Versions including the standalone version you can get at <a href="http://www.creaturesdockingstation.com/">here</a>.<br>
+        <b>Second</b>, you need an Account on AlbianWarp, get yourself one right here.<br>
+        <b>Finally</b> to be able to go online you must download the <a href="/server.cfg">server.cfg</a> and place it in the main directory of DockingStation.<br>
+        The server.cfg should contain the following:
+        <pre><code>
+"Server 0 FriendlyName" {{ server_name }}
+"Server 0 Host" {{ host }}
+"Server 0 ID" 1
+"Server 0 Port" {{ port }}
+"Server Count" 1
+</code></pre>
+        With the Configuration in place and an Account created, you should now be able to go online like you used to, back in the Days!
+    </p>
+    <h3>What to do, if you used a previous Version of AlbianWarp ?</h3>
+    <p>
+        If you used a previous version of AlbianWarp you must first remove the Game Modifications, located in the Bootsrap folder.<br>
+        <ol>
+    <li>Remove the whole directory: "<code>050 Albian Warp</code>" located in your Docking Stations Bootstrap Folder.</li>
+    <li>Remove the file "<code>AW eam vars.cos</code>" from the Directory "<code>./Bootstrap/000 Switcher</code>"</li>
+    <li>Remove the file "<code>reinject_updated_agents.cos</code>" from the Directory "<code>./Bootstrap/dsbuild 195</code>" and restore the original by renaming the Backup file "<code>reinject_updated_agents.cos.backup</code>" to "<code>reinject_updated_agents.cos</code>".</li>
+</ol>
+    This should remove all the AlbianWarp Game Modifications, now you just need to create a New World
+    </p>
+</div>
+{% endblock %}
