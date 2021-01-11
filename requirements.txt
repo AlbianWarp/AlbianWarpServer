@@ -10,3 +10,4 @@ gevent
 mysqlclient
 requests
 prayer==0.1.1
+email_validator
