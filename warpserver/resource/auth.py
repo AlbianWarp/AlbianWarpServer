@@ -1,5 +1,4 @@
 import jwt
-import datetime
 
 from flask import session, request
 from flask_restful import Resource
@@ -7,21 +6,8 @@ from flask_restful import Resource
 from warpserver.model import User
 from warpserver.model.base import db
 from warpserver.server import logger
-from warpserver.util import api_token_required
+from warpserver.util import api_token_required, tokenize_user
 from warpserver.config import SECRET_KEY
-
-
-def tokenize_user(user):
-    token = jwt.encode(
-        {
-            "id": user.id,
-            "username": user.username,
-            "exp": datetime.datetime.now() + datetime.timedelta(days=7),
-        },
-        SECRET_KEY,
-    )
-
-    return token.decode("UTF-8")
 
 
 class AuthResource(Resource):

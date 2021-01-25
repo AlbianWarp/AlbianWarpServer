@@ -9,7 +9,7 @@ from wtforms.validators import DataRequired
 
 from warpserver.model.base import db
 from warpserver.model import User
-from warpserver.resource.auth import tokenize_user
+from warpserver.util import tokenize_user
 
 login_page_blueprint = Blueprint("login", __name__, template_folder="templates")
 
