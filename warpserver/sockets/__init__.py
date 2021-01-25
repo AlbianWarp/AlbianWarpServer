@@ -8,14 +8,17 @@ ws_list = {}
 
 
 def refresh_ws_list():
-    dead_sockets = list()
-    for user in ws_list:
+    dead_users = list()
+    for user, socket in ws_list.items():
+        if socket.closed:
+            dead_users.append(user)
+            continue
         try:
-            ws_list[user].send('{"ping":"0123456789"}')
-        except WebSocketError:
-            dead_sockets.append(user)
-    for socket in dead_sockets:
-        del ws_list[socket]
+            socket.send_frame("0123456789", socket.OPCODE_PING)
+        except WebSocketError as e:
+            dead_users.append(user)
+    for user in dead_users:
+        del ws_list[user]
 
 
 def check_auth(ws):
