@@ -20,6 +20,5 @@ COPY . /app
 # Volumes, Ports & Entrypoint
 VOLUME "/data/"
 EXPOSE 5000:5000
-EXPOSE 1337:1337
 ENTRYPOINT ["python"]
 CMD [ "-u", "run.py"]

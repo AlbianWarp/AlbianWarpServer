@@ -4,7 +4,6 @@ import logging
 from flask import Flask, jsonify
 from flask_sockets import Sockets
 
-from warpserver.rebabel import server_thread, requests
 from warpserver.model import User
 
 from warpserver.model.base import db
@@ -51,15 +50,6 @@ def who_is_online():
     return jsonify(list(ws_list))
 
 
-@app.route("/rebabel/who_is_online")
-def rebabel_who_is_online():
-    tmp = list()
-    for user in User.query:
-        if user.id in requests:
-            tmp.append(user.username)
-    return jsonify(tmp)
-
-
 @sockets.route("/ws")
 def echo_socket(ws):
     while not ws.closed:
@@ -88,5 +78,3 @@ app.register_blueprint(message_blueprint)
 from warpserver.route.creature import creature_blueprint
 
 app.register_blueprint(creature_blueprint)
-
-server_thread.start()
