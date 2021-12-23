@@ -1,5 +1,6 @@
 import jwt
 
+import datetime
 import time
 from functools import wraps
 from flask import request, session, render_template, jsonify
@@ -16,11 +17,12 @@ def request_token_check():
         token = session.get("token")
     if not token:
         return False, "token not found"
-    try:
-        session["user"] = jwt.decode(token, SECRET_KEY)
-    except Exception as e:
+    user = decode_token(token)
+    if user:
+        session["user"] = user
+        return True, "token is ok! session['user']"
+    else:
         return False, "token is broken - %s" % str(e)
-    return True, "token is ok! session['user']"
 
 
 def user_power_lvl_check(min_power_lvl):
@@ -123,11 +125,30 @@ def web_admin_required(f):
     return decorated
 
 
+def encode_token(data):
+    try:
+        return jwt.encode(data, SECRET_KEY, algorithm="HS256")
+    except jwt.exceptions.DecodeError as e:
+        print(e)
+        return None
+
+
 def decode_token(token):
     try:
-        return jwt.decode(token, SECRET_KEY)
-    except Exception as e:
+        return jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.exceptions.DecodeError as e:
+        print(e)
         return None
+
+
+def tokenize_user(user):
+    return encode_token(
+        {
+            "id": user.id,
+            "username": user.username,
+            "exp": datetime.datetime.now() + datetime.timedelta(days=7),
+        }
+    )
 
 
 class MemoizedTTL(object):
