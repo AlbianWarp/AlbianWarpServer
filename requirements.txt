@@ -1,13 +1,14 @@
-Flask
+Flask<2.0
 Flask-Sockets
 Flask-RESTful
 Flask-SQLAlchemy
+WTForms==2.3.3
 Flask-WTF
 wtforms
 PyJWT
 uuid
 gevent
-mysqlclient
+#mysqlclient
 requests
 prayer==0.1.1
 email_validator
