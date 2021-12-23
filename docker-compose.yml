@@ -26,7 +26,6 @@ services:
       - "5000:5000"
     environment:
       AW_SQLALCHEMY_DATABASE_URI: mysql://albianwarp:I6K2PG7p45zgZG687@database:3306/db_albianwarp
-      AW_REBABEL_CONFIG_HOST: 192.168.0.61
 
 volumes:
   warpserver_data:
